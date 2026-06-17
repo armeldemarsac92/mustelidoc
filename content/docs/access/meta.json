@@ -1,0 +1,10 @@
+{
+  "title": "Access & Publishing",
+  "defaultOpen": true,
+  "pages": [
+    "invites-and-project-access",
+    "http-https-apps",
+    "ssh-access",
+    "ssh-keypairs"
+  ]
+}

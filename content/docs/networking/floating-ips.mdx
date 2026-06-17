@@ -1,0 +1,77 @@
+---
+title: Floating IPs
+description: Allocate, associate, release, and use tenant floating IPs in the mustelinet edge model.
+---
+
+import { Globe2, RefreshCw, Route, Trash2 } from 'lucide-react';
+
+Floating IPs give an instance or load balancer a stable tenant address used by mustelinet routing. In mustelinet, tenant app and SSH access usually depends on a floating IP because it anchors generated DNS names and edge routes.
+
+<Callout title="🌐 Floating IPs are not usually user-facing addresses" type="info">
+  On mustelinet, users normally reach workloads through generated DNS names, custom `CNAME` records, or mustelinet SSH routes. The floating IP anchors those routes.
+</Callout>
+
+<Cards>
+  <Card icon={<Globe2 />} title="Allocate">
+    Reserve an address from the public network for your project.
+  </Card>
+  <Card icon={<Route />} title="Associate">
+    Attach it to a VM port or load balancer before expecting routes or DNS records.
+  </Card>
+  <Card icon={<RefreshCw />} title="Reconcile">
+    Generated DNS and route views may take about 15 seconds to appear after association.
+  </Card>
+  <Card icon={<Trash2 />} title="Release">
+    Return unused addresses to the pool so they stop consuming floating IP quota.
+  </Card>
+</Cards>
+
+## Tenant model
+
+- Floating IPs are allocated from the public network.
+- The current tenant floating IP range is `10.50.0.0/24`.
+- Treat this range as edge-facing tenant addresses used by mustelinet routing.
+- Public users normally reach tenant apps through generated DNS names and the public edge, not by connecting directly to `10.50.0.0/24`.
+- A floating IP must be associated to an instance port or load balancer before it is useful.
+
+## Allocate a floating IP
+
+1. Open Network, then Floating IPs.
+2. Choose Allocate IP.
+3. Select the public network shown for your project.
+4. Confirm the allocation.
+
+The floating IP now belongs to your project and consumes floating IP quota.
+
+## Associate a floating IP
+
+1. Open Network, then Floating IPs.
+2. Find the floating IP row.
+3. On the right side of its row, open More.
+4. Choose Associate.
+5. Select the target instance port, VM, or load balancer.
+6. Confirm the association.
+7. Check the instance or load balancer details page to confirm the floating IP appears.
+
+Some Skyline views also expose association from Compute, Instances through Related Resources, Associate Floating IP.
+
+Association is the step that makes the address useful for generated DNS records, HTTP/HTTPS edge routing, and mustelinet SSH route generation.
+
+## Disassociate or release a floating IP
+
+Disassociate a floating IP when you want to move it to another instance or load balancer.
+
+Release a floating IP when you no longer need it. Releasing it returns the address to the pool and may remove or change generated access names that depended on it.
+
+<Callout title="⚠️ Release only when the route can disappear" type="warn">
+  Releasing a floating IP can remove or change generated DNS names and access routes that depend on it.
+</Callout>
+
+## Terraform behavior
+
+Terraform can allocate and associate floating IPs as part of a repeatable stack. If Terraform manages the floating IP, make changes in Terraform code so future runs keep the intended association.
+
+## Official reference
+
+- [Skyline Console: Create a floating IP](https://docs.openstack.org/skyline-console/latest/user/network.html#create-a-fip)
+- [Skyline Console: Associate floating IP from an instance](https://docs.openstack.org/skyline-console/latest/user/compute.html#allocate-a-floating-ip-to-an-instance)

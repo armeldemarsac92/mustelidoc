@@ -1,0 +1,76 @@
+---
+title: Quick reference
+description: Copy the mustelinet URLs, route formats, and tenant values used across the docs.
+---
+
+import { Activity, CloudCog, Globe2, KeyRound, Search, Terminal } from 'lucide-react';
+
+Use this page when you already know what you are trying to do and need the exact URL, route format, or value source.
+
+<Cards>
+  <Card icon={<Search />} title="Skyline dashboard" href="https://skyline.mustelinet.com">
+    `https://skyline.mustelinet.com`
+  </Card>
+  <Card icon={<KeyRound />} title="Authentication">
+    `auth.mustelinet.com`
+  </Card>
+  <Card icon={<Terminal />} title="SSH endpoint">
+    `ssh.mustelinet.com` on port `2222`
+  </Card>
+  <Card icon={<Globe2 />} title="App DNS suffix">
+    `apps.mustelinet.com`
+  </Card>
+  <Card icon={<CloudCog />} title="OpenStack auth URL">
+    `https://keystone.mustelinet.com`
+  </Card>
+  <Card icon={<Activity />} title="Service status" href="https://stats.uptimerobot.com/DwWzvE7wS8">
+    Check uptime before debugging tenant resources.
+  </Card>
+</Cards>
+
+## Identifiers and route formats
+
+| What you need | Format | Source |
+| --- | --- | --- |
+| Generated VM DNS name | `<vm_id>.<project_id>.apps.mustelinet.com` | Skyline DNS or Designate page after floating IP association. |
+| SSH command | `ssh -p 2222 <vm-username>@<vm-name>-<project-name>@ssh.mustelinet.com` | VM username comes from the image; VM name and project name come from Skyline. |
+| Ubuntu SSH username | `ubuntu` | Ubuntu cloud images normally use this user. |
+| OpenStack auth URL | `https://keystone.mustelinet.com` | Use with application credentials for Terraform and API automation. |
+| Tenant floating IP range | `10.50.0.0/24` | Used by mustelinet routing; not a direct public internet IP range. |
+
+<Callout title="🧭 DNS IDs and SSH names are different" type="info">
+  Generated DNS names use VM and project IDs. SSH uses the VM username plus VM and project names in the route template.
+</Callout>
+
+## Where to find values in Skyline
+
+| Value | Where to look |
+| --- | --- |
+| Current project | Project selector in the Skyline header. |
+| VM name | Compute, Instances. |
+| VM ID | Instance details page. |
+| Project ID | Project details, Identity area, DNS zone, or onboarding resource summary when exposed. |
+| Floating IP | Network, Floating IPs, or the instance details page after association. |
+| Generated DNS name | DNS or Designate page in the project zone under `apps.mustelinet.com`. |
+| Security group rules | Network, Security Groups. |
+| Application credentials | User menu, User Center, Application Credentials. |
+
+## Terraform values
+
+Use an application credential from the correct project, then configure Terraform with:
+
+```yaml
+clouds:
+  mustelinet:
+    auth_type: v3applicationcredential
+    auth:
+      auth_url: https://keystone.mustelinet.com
+      application_credential_id: <application-credential-id>
+      application_credential_secret: <application-credential-secret>
+    interface: public
+    identity_api_version: 3
+```
+
+<Callout title="🔒 Keep generated secrets local" type="warn">
+  Do not commit `clouds.yaml`, Terraform state, application credential secrets, private keys, or kubeconfigs.
+</Callout>

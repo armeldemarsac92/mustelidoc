@@ -1,0 +1,75 @@
+---
+title: "First VM 2: launch the instance"
+description: Create your first VM in Skyline and attach it to the project network.
+---
+
+import { KeyRound, Network, Server, ShieldCheck } from 'lucide-react';
+
+After the project network is ready, launch the VM from the Compute tab and attach it to that network.
+
+## Decide whether you need an SSH keypair
+
+External SSH access to mustelinet VMs uses mustelinet SSH, not keypair-based direct SSH from the internet. You usually do not need an SSH keypair for the external tenant access path.
+
+<Callout title="🔑 Keypairs are not the public SSH path" type="info">
+  mustelinet SSH is the standard external tenant path. Create a keypair only when the image, launch form, or internal project workflow requires one.
+</Callout>
+
+Create or import an SSH keypair only if:
+
+- Your selected image or launch form requires one.
+- You want VM-to-VM SSH inside the same project network.
+- Your project has a specific bootstrap workflow that uses SSH keypairs.
+
+If you need one:
+
+1. Open Compute, then Key Pairs.
+2. Create or import an SSH keypair.
+3. If Skyline generates a private key, download it immediately and keep it private.
+
+See [SSH keypairs](/docs/access/ssh-keypairs) for the full tenant guidance.
+
+## Create the instance
+
+<Cards>
+  <Card icon={<Server />} title="Choose compute shape">
+    Pick the flavor and image that match the workload and quota available in the selected project.
+  </Card>
+  <Card icon={<Network />} title="Attach the first VM network">
+    Select the network and subnet created in the previous guide.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Attach security group">
+    Use a group you can later update for mustelinet SSH or app publishing.
+  </Card>
+  <Card icon={<KeyRound />} title="Use keypair only when needed">
+    Choose Keypair only when the image or workflow requires it.
+  </Card>
+</Cards>
+
+1. Open Compute, then Instances.
+2. Click Create Instance.
+3. Choose an availability zone if Skyline asks for one.
+4. Choose a flavor under Specification.
+5. Choose an image under Start Source.
+6. Choose whether the system disk should be deleted with the instance.
+7. Click Next: Network Config.
+8. Select the network you created in [First VM 1: create a network](/docs/getting-started/first-vm-network).
+9. Select the subnet or virtual interface for that network.
+10. Attach the security group you plan to use for SSH.
+11. Click Next: System Config.
+12. Enter the instance name.
+13. If Skyline requires a login type, choose the option that matches your project workflow. Choose Keypair only when you created or imported one for this VM.
+14. Confirm the configuration and create the instance.
+
+Skyline's official instance workflow describes the Network Config step as the place where you add networks, choose the virtual interface, and select security groups.
+
+## Wait for the VM
+
+Return to Compute, Instances and wait for the VM to become active.
+
+Use the instance details, console log, or web console if the VM does not boot as expected. Do not continue to floating IP and mustelinet SSH until the VM is active.
+
+## Official reference
+
+- [Skyline Console: Launch and manage instances](https://docs.openstack.org/skyline-console/latest/user/compute.html)
+- [Instances](/docs/compute/instances)

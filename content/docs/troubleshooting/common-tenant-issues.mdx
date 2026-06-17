@@ -1,0 +1,162 @@
+---
+title: Common tenant issues
+description: Tenant-focused checks for Skyline, DNS, app access, SSH, floating IPs, and Magnum.
+---
+
+import { Activity, Clock, FileText, Globe2, Search, ShieldCheck, Terminal } from 'lucide-react';
+
+Use these checks before changing tenant resources. They focus on tenant-visible state and avoid platform operator commands.
+
+<Cards>
+  <Card icon={<Activity />} title="Service status" href="/docs/troubleshooting/service-status">
+    Check the uptime page first when several services or users are affected.
+  </Card>
+  <Card icon={<Search />} title="Skyline access" href="/docs/troubleshooting/common-tenant-issues#cannot-log-in-to-skyline">
+    Start here when login works incorrectly or the expected project is missing.
+  </Card>
+  <Card icon={<Terminal />} title="SSH" href="/docs/troubleshooting/common-tenant-issues#cannot-ssh-to-a-vm">
+    Check VM state, floating IP, route, security group, user, permissions, and VM trust.
+  </Card>
+  <Card icon={<Globe2 />} title="Web app access" href="/docs/troubleshooting/common-tenant-issues#web-app-dns-name-resolves-but-the-app-does-not-load">
+    Check generated DNS, app listener, security group, hostname, and HTTPS behavior.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Security groups" href="/docs/troubleshooting/common-tenant-issues#security-group-missing-inbound-rule">
+    Confirm the port, source, and attached resource match the access path.
+  </Card>
+  <Card icon={<Clock />} title="Route reconciliation" href="/docs/troubleshooting/common-tenant-issues#generated-dns-route-has-not-appeared">
+    Wait briefly after floating IP association, then refresh the project view.
+  </Card>
+  <Card icon={<FileText />} title="Issue details" href="/docs/troubleshooting/common-tenant-issues#what-to-record-for-an-issue">
+    Record resource IDs and errors, but leave secrets out.
+  </Card>
+</Cards>
+
+<Callout title="🚦 Check status before deep troubleshooting" type="info">
+  If Skyline, auth, DNS, SSH, or app access all look unhealthy at the same time, check the mustelinet uptime page before changing tenant resources.
+</Callout>
+
+## Cannot log in to Skyline
+
+Check:
+
+- You used the mustelinet invite link to complete registration.
+- You registered through GitHub at `auth.mustelinet.com`.
+- You are using `https://skyline.mustelinet.com`.
+- The mustelinet team has configured your project group permissions.
+
+If registration is complete but Skyline still denies access or shows no project, wait for group permissions to be applied.
+
+## Cannot SSH to a VM
+
+Check:
+
+- The VM is active.
+- The VM has an associated floating IP.
+- A mustelinet SSH route exists for the VM.
+- The security group allows TCP `22` from `0.0.0.0/0`.
+- You are using the image default user, such as `ubuntu` for Ubuntu.
+- Your GitHub-registered user has the required project group permission.
+- The VM trusts the platform SSH User CA.
+
+Root SSH is denied by policy.
+
+## mustelinet SSH route missing
+
+Check:
+
+- The VM is in the project you expect.
+- The VM has a floating IP associated to the instance port.
+- The VM was created recently and route generation may still be reconciling.
+- The instance name is clear enough to identify in generated route views.
+
+If it remains missing, record the project, instance name, instance ID if visible, floating IP, and creation time.
+
+## SSH certificate rejected
+
+Check:
+
+- You authenticated through mustelinet SSH successfully.
+- Your project group permission allows the route.
+- The VM trusts the platform SSH User CA.
+- The VM was created after trust bootstrap was enabled, or has had trust files applied.
+
+Older VMs may need trust bootstrap applied manually or cloud-init rerun.
+
+## Web app DNS name resolves but the app does not load
+
+Check:
+
+- The floating IP is associated to the correct VM or load balancer.
+- The app is listening on the expected port.
+- The security group allows TCP `80` and/or TCP `443` from `0.0.0.0/0`.
+- The app responds from inside the VM or load balancer network.
+- The generated hostname is the hostname used by the browser or client.
+
+DNS resolution only proves the name exists. It does not prove the app is listening or allowed by security groups.
+
+## HTTP works but HTTPS fails
+
+Check:
+
+- The app listens on port `443`.
+- The app certificate covers the hostname users visit.
+- The app is not redirecting to an internal-only hostname.
+- The client is using the generated DNS name, not the tenant floating IP.
+- Security groups allow TCP `443` from `0.0.0.0/0`.
+
+## Floating IP is allocated but not associated
+
+An allocated floating IP belongs to your project, but it is not useful until associated to an instance port or load balancer.
+
+Open Network, Floating IPs, then associate it with the intended origin. Release unused floating IPs to free quota.
+
+## Security group missing inbound rule
+
+If a port is blocked:
+
+- Add the narrowest inbound rule that matches the access path.
+- Use the expected port, such as `22`, `80`, `443`, or `25565` when enabled.
+- Use source `0.0.0.0/0` for the standard mustelinet SSH and public HTTP/HTTPS paths.
+- Do not use the end user's public IP as the source for proxied paths; the VM sees the mustelinet proxy or edge as the source.
+- Remove broad test rules after troubleshooting.
+
+## Generated DNS route has not appeared
+
+Check:
+
+- The floating IP exists.
+- The floating IP is associated to the VM or load balancer.
+- At least 15 seconds have passed since the association.
+- You are viewing the correct project.
+- The Skyline DNS or Designate page is refreshed.
+- Floating IP metadata views are refreshed, if your project exposes them.
+
+Generated records are created automatically from OpenStack inventory, usually within 15 seconds after floating IP association.
+
+## Magnum cluster creation appears stuck
+
+Check:
+
+- The selected template is `k8s-capi-helm-ubuntu-v1.34.7` when that is the expected tenant template.
+- Project quota allows the requested node count and flavor.
+- Required networks, SSH keypairs, and security groups exist.
+- The cluster has not reached a final failed state.
+
+Cluster creation can take time. Temporary backend polling errors do not always mean final failure.
+
+## What to record for an issue
+
+Record:
+
+- Project name.
+- Resource name and ID when visible.
+- Floating IP and generated DNS name, if relevant.
+- Timestamp and timezone.
+- Screenshot or copied error text from Skyline or the client.
+- Whether the resource was created by Skyline or Terraform.
+
+Do not include secrets, private keys, kubeconfigs, `clouds.yaml`, Terraform state, or application credential secrets.
+
+<Callout title="🧰 Issue notes should be reproducible, not secret-bearing" type="warn">
+  Record project, resource identifiers, timestamps, and copied error text. Do not include credentials, private keys, kubeconfigs, `clouds.yaml`, Terraform state, or application credential secrets.
+</Callout>

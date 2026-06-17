@@ -1,0 +1,98 @@
+---
+title: Publish web apps
+description: Publish tenant web applications through generated DNS names and the public edge.
+---
+
+import { Globe2, LockKeyhole, Route, ShieldCheck } from 'lucide-react';
+
+Tenant web apps are published through generated DNS names under `apps.mustelinet.com` and the mustelinet public edge. Public users use the DNS name; the edge routes traffic to the VM or load balancer associated with the floating IP.
+
+For the edge to reach your app, the VM or load balancer must have an associated floating IP and its security group must allow the public app port from `0.0.0.0/0`.
+
+<Callout title="🛡️ Security groups authorize the edge" type="warn">
+  Do not restrict HTTP or HTTPS rules to a user's public IP. The app sees the mustelinet edge as the source, so use app authentication or route policy for user-level restrictions.
+</Callout>
+
+```text
+public user
+  -> <vm_id>.<project_id>.apps.mustelinet.com
+  -> mustelinet public edge
+  -> tenant floating IP
+  -> VM or load balancer
+  -> application
+```
+
+<Cards>
+  <Card icon={<Globe2 />} title="Generated DNS name" href="/docs/networking/dns-names">
+    Use the `apps.mustelinet.com` hostname as the stable public route target.
+  </Card>
+  <Card icon={<Route />} title="Public edge">
+    Routes HTTP by host header and HTTPS by hostname/SNI behavior.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Security group">
+    Allow TCP `80`, TCP `443`, or the enabled public port from `0.0.0.0/0`.
+  </Card>
+  <Card icon={<LockKeyhole />} title="HTTPS">
+    Serve a certificate that covers the hostname users visit.
+  </Card>
+</Cards>
+
+## Supported public ports
+
+The default tenant offering publishes:
+
+| Use case | Public port | Tenant behavior |
+| --- | --- | --- |
+| HTTP | `80` | The edge routes by HTTP `Host` header. |
+| HTTPS | `443` | The edge routes by hostname and SNI behavior. |
+| Minecraft, when enabled | `25565` | A Minecraft-aware router handles the connection. |
+
+Generic arbitrary TCP or UDP publishing is not part of the default tenant offering.
+
+## Publish a web app
+
+1. Launch or select the VM or load balancer that runs the app.
+2. Associate a floating IP.
+3. Open the DNS or Designate page in Skyline and find the generated DNS name under `apps.mustelinet.com`. VM records follow the `<vm_id>.<project_id>.apps.mustelinet.com` convention.
+4. Configure the app to listen on the expected port, usually `80` or `443`.
+5. Add security group rules that allow TCP `80` and/or TCP `443` from `0.0.0.0/0`.
+6. Test the generated hostname from a browser or HTTP client.
+
+HTTP routing uses the `Host` header. HTTPS routing uses the requested hostname and SNI behavior through the edge, so clients must use the generated DNS name or an approved hostname.
+
+Do not restrict the HTTP or HTTPS security group rule to a user's public IP. Incoming traffic is relayed by the mustelinet edge, so the VM or load balancer sees the proxy as the source. Use application authentication or route policy for user-level restrictions.
+
+## Use your own domain
+
+If you manage your own public DNS zone, create a `CNAME` record at your DNS provider that points your hostname to the generated mustelinet DNS name.
+
+For example:
+
+```text
+app.example.com. CNAME <vm_id>.<project_id>.apps.mustelinet.com.
+```
+
+Keep the generated name as the target. If the floating IP or generated name changes, update your `CNAME`.
+
+## HTTPS notes
+
+If HTTPS reaches the app but fails certificate validation, check:
+
+- The app certificate includes the hostname users are visiting.
+- The app is serving HTTPS on port `443`.
+- The app is not redirecting to an internal-only hostname.
+- The security group allows TCP `443` from `0.0.0.0/0`.
+
+## What the edge does not do
+
+The edge does not make arbitrary private VM ports public by default. Opening a port in a security group is necessary for edge access to the VM or load balancer, but it does not by itself create public routing for that port.
+
+## Quick troubleshooting
+
+If the DNS name resolves but the app does not load:
+
+- Confirm the floating IP is associated.
+- Confirm the app is listening on the expected port.
+- Confirm the security group allows TCP `80` and/or TCP `443` from `0.0.0.0/0`.
+- Confirm the app responds locally on the VM or behind the load balancer.
+- For HTTPS, confirm certificate and SNI behavior.

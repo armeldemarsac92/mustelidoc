@@ -1,0 +1,10 @@
+{
+  "title": "Networking",
+  "defaultOpen": true,
+  "pages": [
+    "security-groups",
+    "networks-and-routers",
+    "floating-ips",
+    "dns-names"
+  ]
+}

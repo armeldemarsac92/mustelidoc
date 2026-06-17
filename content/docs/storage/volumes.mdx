@@ -1,0 +1,66 @@
+---
+title: Volumes
+description: Create, attach, detach, and clean up tenant block storage volumes.
+---
+
+import { CloudCog, Database, Server, Trash2 } from 'lucide-react';
+
+Volumes provide persistent block storage for instances. Use them for data that should survive instance rebuilds or for workloads that need storage independent from the VM lifecycle.
+
+<Callout title="💾 Volumes can outlive instances" type="info">
+  Deleting a VM does not always delete attached or separately created volumes. Check storage after cleanup so unused volumes do not keep consuming quota.
+</Callout>
+
+<Cards>
+  <Card icon={<Database />} title="Create">
+    Choose a name, size, and volume type that fit the workload and quota.
+  </Card>
+  <Card icon={<Server />} title="Attach">
+    Attach the block device, then format and mount it inside the guest OS.
+  </Card>
+  <Card icon={<Trash2 />} title="Detach or delete">
+    Stop writes, unmount inside the VM, detach, then delete only when data is no longer needed.
+  </Card>
+  <Card icon={<CloudCog />} title="Terraform">
+    Keep volumes and attachments in code when the stack should be repeatable.
+  </Card>
+</Cards>
+
+## Create a volume
+
+1. Open Volume or Storage, then Volumes.
+2. Choose Create Volume.
+3. Enter a name, size, and volume type if the project exposes volume types.
+4. Create the volume and wait for it to become available.
+
+Volume capacity counts against project quota. Choose the smallest size that fits the workload and expand later if needed.
+
+## Attach a volume to an instance
+
+1. Open the volume actions menu.
+2. Choose Attach.
+3. Select the instance.
+4. Confirm the attachment.
+5. Inside the VM, format and mount the device if it is new.
+
+Skyline attaches the block device to the VM. The guest operating system still controls partitioning, filesystems, mount points, and application data.
+
+## Detach or delete a volume
+
+Before detaching, stop applications that write to the volume and unmount it inside the VM.
+
+<Callout title="⚠️ Unmount before detach" type="warn">
+  Detaching a volume while the guest OS or application is still writing can corrupt data.
+</Callout>
+
+To delete a volume:
+
+1. Confirm it is detached.
+2. Confirm no snapshots or backups are still needed.
+3. Delete it from the volume list.
+
+Deleting an instance does not always delete attached or separately created volumes. Check the volume list after instance cleanup so unused storage does not keep consuming quota.
+
+## Use volumes with Terraform
+
+Terraform is a better fit when volumes, attachments, instances, and security groups should be created together. If Terraform manages a volume, inspect it in Skyline but make lasting changes in Terraform code.

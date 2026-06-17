@@ -1,0 +1,170 @@
+---
+title: Terraform
+description: Automate mustelinet tenant resources using the same concepts exposed in Skyline.
+---
+
+import { CloudCog, FileText, KeyRound, ShieldCheck } from 'lucide-react';
+
+Terraform automates the same OpenStack tenant resources that Skyline exposes through the UI. Use it when the environment should be repeatable, reviewed, or shared by a team.
+
+<Callout title="🔒 Keep credentials and generated outputs local" type="warn">
+  Do not commit `clouds.yaml`, Terraform state, private keys, kubeconfigs, or generated secrets. Treat them as local workstation or CI secrets.
+</Callout>
+
+## Skyline or Terraform
+
+Use Skyline for:
+
+- Learning the platform.
+- Inspecting resources.
+- Creating simple instances.
+- Managing floating IPs, security groups, SSH keypairs, volumes, and basic networks.
+- One-off troubleshooting.
+
+Use Terraform for:
+
+- Repeatable environments.
+- Team-shared infrastructure.
+- Kubernetes or Magnum clusters.
+- Rebuilding test stacks.
+- Managing many related resources consistently.
+
+<Cards>
+  <Card icon={<KeyRound />} title="Authenticate with an app credential" href="/docs/identity/application-credentials">
+    Use a project-scoped OpenStack application credential instead of personal interactive login.
+  </Card>
+  <Card icon={<FileText />} title="Review the plan">
+    Check every resource change before applying, especially networking, routes, volumes, and clusters.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Protect local files">
+    Ignore credentials, state, private keys, kubeconfigs, and generated outputs.
+  </Card>
+  <Card icon={<CloudCog />} title="Inspect in Skyline">
+    Use Skyline to confirm resource state without manually changing Terraform-managed resources.
+  </Card>
+</Cards>
+
+## Tenant concepts map directly
+
+Terraform resources should follow the same tenant model:
+
+- Project-local OpenStack authentication, often through `clouds.yaml`.
+- Keypair creation or public key import.
+- Security group rules for SSH, HTTP, HTTPS, and application ports.
+- Networks, subnets, and routers when your project manages them.
+- Floating IP allocation and association.
+- Generated app DNS names from floating IP ownership.
+- Volumes and volume attachments.
+- Magnum cluster creation from the public CAPI Helm template.
+
+## Endpoint
+
+Use the mustelinet Keystone/OpenStack authentication URL:
+
+```text
+https://keystone.mustelinet.com
+```
+
+Use this as the `auth_url` with an application credential from the correct project. Do not commit `clouds.yaml` or credential material.
+
+## Minimal project layout
+
+A small Terraform workspace usually starts with:
+
+```text
+my-stack/
+  main.tf
+  versions.tf
+  clouds.yaml
+  .gitignore
+```
+
+Keep `clouds.yaml` local. It should describe your OpenStack cloud and use the application credential created for the correct project.
+
+Example shape:
+
+```yaml
+clouds:
+  mustelinet:
+    auth_type: v3applicationcredential
+    auth:
+      auth_url: https://keystone.mustelinet.com
+      application_credential_id: <application-credential-id>
+      application_credential_secret: <application-credential-secret>
+    interface: public
+    identity_api_version: 3
+```
+
+Reference that cloud from the OpenStack provider:
+
+```hcl
+terraform {
+  required_providers {
+    openstack = {
+      source = "terraform-provider-openstack/openstack"
+    }
+  }
+}
+
+provider "openstack" {
+  cloud = "mustelinet"
+}
+```
+
+Then run Terraform from the workspace directory:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+Review every plan before applying it, especially changes to security groups, floating IPs, routers, volumes, and Kubernetes clusters.
+
+## Sensitive files
+
+Never commit or share:
+
+- `clouds.yaml`.
+- `terraform.tfstate`.
+- `terraform.tfstate.*`.
+- Generated private keys.
+- Generated kubeconfigs.
+
+A project `.gitignore` should include at least:
+
+```text
+clouds.yaml
+terraform.tfstate
+terraform.tfstate.*
+generated/
+*.pem
+*.key
+*kubeconfig*
+```
+
+If you intentionally commit generated public files, keep private keys and kubeconfigs out of the generated directory or use more specific ignore rules.
+
+## Application credentials
+
+Use an OpenStack [application credential](/docs/identity/application-credentials) for Terraform when possible. In Skyline, click your user icon in the top-right corner, open User Center, then select Application Credentials from the left sidebar. Store the generated secret outside version control.
+
+If the credential is lost, create a new one. If it is exposed, delete it and rotate Terraform configuration.
+
+## Generated files
+
+Some Terraform examples write local files such as SSH private keys, kubeconfigs, or helper inventories under `generated/`. Treat that directory as local output. Do not upload it to Git or attach it to shared notes.
+
+## Magnum with Terraform
+
+For tenant Kubernetes clusters, Terraform should use the public template exposed to tenants:
+
+- Cluster template: `k8s-capi-helm-ubuntu-v1.34.7`.
+- Node image: `ubuntu-jammy-kube-v1.34.7`.
+- Kubernetes version: `v1.34.7`.
+
+Keep cluster size, flavor, network choices, and generated kubeconfig handling in code so a team can review the full cluster request before applying it.
+
+## Avoid drift
+
+If Terraform manages a resource, avoid changing it manually in Skyline. Manual edits can create drift, and later Terraform runs may revert the change or fail until the code or state is updated.

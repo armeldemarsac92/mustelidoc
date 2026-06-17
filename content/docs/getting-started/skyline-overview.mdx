@@ -1,0 +1,104 @@
+---
+title: Skyline overview
+description: Log in to Skyline, choose the right project, and find common tenant resources.
+---
+
+import { CloudCog, Database, Network, Server, ShieldCheck } from 'lucide-react';
+
+Skyline is the web dashboard for the mustelinet OpenStack cloud. Use it when you want to inspect resources, create simple VMs, manage networking, or check what Terraform created.
+
+<Callout title="🎯 Check the project selector first" type="warn">
+  Most tenant resources are project-scoped. If a resource is missing or quota looks wrong, confirm the selected project before changing anything.
+</Callout>
+
+## Log in
+
+1. Complete registration from your mustelinet invite link.
+2. Wait until the mustelinet team has configured your project group permissions.
+3. Open `https://skyline.mustelinet.com`.
+4. Sign in with GitHub SSO. Skyline redirects through `auth.mustelinet.com`; GitHub is the only SSO option.
+5. After login, confirm that Skyline shows the expected project before creating or changing resources.
+
+If you completed registration but cannot log in, or if you can log in but do not see your project, wait for group permissions to be configured. See [Invites and project access](/docs/access/invites-and-project-access) for details.
+
+## Select a project
+
+Most OpenStack resources are project-scoped. Before creating an instance, SSH keypair, floating IP, volume, or Kubernetes cluster, check the project selector in the Skyline header.
+
+Use the project selector when:
+
+- You belong to more than one project.
+- A resource you expected is missing.
+- Quotas or usage do not match the environment you meant to use.
+- Terraform created resources, but you do not see them in Skyline.
+
+## Read the current scope
+
+Skyline pages usually show the current project context near the top navigation or in the project selector. Treat that scope as part of every action you take. An SSH keypair, security group, network, volume, floating IP, application credential, or Magnum cluster created in one project is not automatically available in another project.
+
+## Check quota and usage
+
+Quota and usage views vary by Skyline deployment and project role. Look for quota or overview panels in the dashboard, compute, network, volume, or Kubernetes sections.
+
+Common quota limits include:
+
+- Instances and vCPUs.
+- RAM.
+- Volumes and volume capacity.
+- Floating IPs.
+- Networks, routers, ports, and security groups.
+- Magnum clusters and worker nodes, when enabled.
+
+If a create action fails even though the form looks valid, check quota before retrying with a smaller flavor, fewer nodes, or fewer floating IPs.
+
+## Find tenant resources
+
+Skyline organizes resources by service area. Names may vary slightly by version, but the same concepts apply.
+
+<Cards>
+  <Card icon={<Server />} title="Compute" href="/docs/compute/instances">
+    Instances, images, flavors, consoles, and keypairs.
+  </Card>
+  <Card icon={<Network />} title="Networking" href="/docs/networking/networks-and-routers">
+    Networks, subnets, routers, security groups, and floating IPs.
+  </Card>
+  <Card icon={<Database />} title="Storage" href="/docs/storage/volumes">
+    Volumes, snapshots, and instance attachments.
+  </Card>
+  <Card icon={<CloudCog />} title="Automation" href="/docs/automation/terraform">
+    Use Skyline to inspect resources that Terraform created.
+  </Card>
+</Cards>
+
+| Resource | Where to look |
+| --- | --- |
+| Projects and project scope | Project selector or Identity area |
+| Instances | Compute, Instances |
+| Images | Compute, Images |
+| Flavors | Compute, Flavors |
+| SSH keypairs | Compute, Key Pairs |
+| Security groups | Network, Security Groups |
+| Networks and subnets | Network, Networks |
+| Routers | Network, Routers |
+| Floating IPs | Network, Floating IPs |
+| Volumes and snapshots | Volume or Storage |
+| Kubernetes clusters | Kubernetes, Container Infra, or Magnum |
+| Cluster templates | Kubernetes, Container Infra, or Magnum templates |
+| Application credentials | User menu, User Center, Application Credentials |
+| DNS zones and records | DNS or Designate, when exposed to your role |
+
+## Use Skyline and Terraform together
+
+Skyline and Terraform expose the same tenant concepts through different workflows.
+
+Use Skyline for learning, one-off changes, inspection, and troubleshooting. Use Terraform when the environment should be repeatable, reviewed, shared with a team, or rebuilt later.
+
+It is fine to inspect Terraform-managed resources in Skyline. Avoid editing Terraform-managed resources by hand unless you also update Terraform state or code, otherwise future Terraform runs may undo or conflict with the manual change.
+
+## First VM path
+
+For your first VM, create the network first:
+
+1. [Create the network, subnet, router, and external gateway](/docs/getting-started/first-vm-network).
+2. [Launch the VM on that network](/docs/getting-started/first-vm-instance).
+3. [Expose the VM route and connect through mustelinet SSH](/docs/getting-started/first-vm-access).

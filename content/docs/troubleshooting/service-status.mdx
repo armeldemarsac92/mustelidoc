@@ -1,0 +1,45 @@
+---
+title: Service status
+description: Check mustelinet service uptime before troubleshooting tenant resources.
+---
+
+import { Activity, FileText, Globe2, Search } from 'lucide-react';
+
+Use the mustelinet uptime page when a problem may be caused by a platform service issue rather than a tenant resource configuration issue.
+
+<Callout title="🚦 Check status first for broad incidents" type="info">
+  If multiple users, projects, or services are affected, check the status page before changing VMs, DNS records, security groups, or Terraform-managed resources.
+</Callout>
+
+<Cards>
+  <Card icon={<Activity />} title="Open uptime page" href="https://stats.uptimerobot.com/DwWzvE7wS8">
+    View current uptime and recent incidents for mustelinet cloud services.
+  </Card>
+  <Card icon={<Search />} title="Then check tenant state" href="/docs/troubleshooting/common-tenant-issues">
+    If services are healthy, continue with the tenant-focused troubleshooting checklist.
+  </Card>
+  <Card icon={<Globe2 />} title="App access" href="/docs/access/http-https-apps">
+    Check DNS, edge routing, app listener, HTTPS behavior, and security groups.
+  </Card>
+  <Card icon={<FileText />} title="Issue details" href="/docs/troubleshooting/common-tenant-issues#what-to-record-for-an-issue">
+    Record project, resource, timestamp, and error details when the issue persists.
+  </Card>
+</Cards>
+
+## When to use the status page
+
+Check the uptime page when:
+
+- Skyline or authentication is unavailable for more than one user.
+- Generated DNS names or public app routes fail across multiple resources.
+- mustelinet SSH fails for several VMs or projects at the same time.
+- Terraform or API automation fails before reaching a specific tenant resource.
+- A working service suddenly fails without a recent tenant-side change.
+
+## When to continue troubleshooting
+
+If the status page is healthy, continue with [Common tenant issues](/docs/troubleshooting/common-tenant-issues). Tenant-side checks are still needed for missing floating IP associations, incorrect security group rules, app listener issues, image user mistakes, quota limits, and Terraform drift.
+
+<Callout title="⚠️ Do not change Terraform-managed resources just to test" type="warn">
+  If Terraform owns the resource, inspect it in Skyline but make lasting changes in Terraform code.
+</Callout>

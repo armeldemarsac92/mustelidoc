@@ -1,0 +1,99 @@
+---
+title: How access works
+description: Understand how generated DNS names, the public edge, floating IPs, security groups, and mustelinet SSH fit together.
+---
+
+import { Globe2, Network, Route, ShieldCheck, Terminal } from 'lucide-react';
+
+mustelinet uses OpenStack resources plus platform edge services. The important idea is that a floating IP is a route target for the edge model; users normally access apps and SSH routes through hostnames, not by connecting directly to the floating IP address.
+
+<Callout title="🧭 Use names and routes, not raw floating IPs" type="info">
+  Tenant-facing access is hostname-driven. Floating IPs anchor generated DNS records and edge routes, but users should normally use generated names, custom `CNAME` records, or mustelinet SSH routes.
+</Callout>
+
+<Cards>
+  <Card icon={<Globe2 />} title="Web apps" href="/docs/access/http-https-apps">
+    Generated DNS name, public edge, floating IP, app port, and security group rule.
+  </Card>
+  <Card icon={<Terminal />} title="SSH" href="/docs/access/ssh-access">
+    mustelinet SSH route, GitHub SSO, and VM trust.
+  </Card>
+  <Card icon={<Route />} title="Floating IPs" href="/docs/networking/floating-ips">
+    Tenant floating IP addresses used by mustelinet routing and generated names.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Security groups" href="/docs/networking/security-groups">
+    Firewall rules still decide whether the edge can reach the VM or load balancer.
+  </Card>
+</Cards>
+
+## Web app access
+
+Public HTTP and HTTPS traffic follows this path:
+
+```text
+public user
+  -> <vm_id>.<project_id>.apps.mustelinet.com
+  -> mustelinet public edge
+  -> tenant floating IP
+  -> VM or load balancer
+  -> application
+```
+
+For this to work:
+
+- The VM or load balancer must have an associated floating IP.
+- mustelinet automatically creates a generated DNS name under `apps.mustelinet.com`, usually within 15 seconds after the floating IP is associated to the resource.
+- VM generated DNS names follow the `<vm_id>.<project_id>.apps.mustelinet.com` convention.
+- The app must listen on the expected port, usually TCP `80` or TCP `443`.
+- The security group must allow that port from `0.0.0.0/0`.
+- The user must visit the generated DNS name or a custom `CNAME` that points to it.
+
+Opening a security group port is necessary, but it does not create public routing by itself. The automatically generated DNS name and public edge route are also part of the path.
+
+Do not restrict these rules to the end user's public IP. Public traffic is relayed by the mustelinet proxy or edge, so the VM sees the proxy as the source.
+
+<Callout title="⚠️ Opening a port is not enough" type="warn">
+  Public app access needs the full chain: floating IP association, generated name, edge route, listening app port, and a matching security group rule.
+</Callout>
+
+## SSH access
+
+Tenant SSH uses mustelinet SSH:
+
+```text
+user
+  -> ssh.mustelinet.com:2222
+  -> GitHub SSO through auth.mustelinet.com
+  -> route policy and project group check
+  -> short-lived SSH access
+  -> VM that trusts the platform SSH User CA
+```
+
+For this to work:
+
+- The VM must be active.
+- The VM must have an associated floating IP.
+- A mustelinet SSH route must exist for the VM.
+- The security group must allow TCP `22` from `0.0.0.0/0`.
+- The VM image must support SSH.
+- The VM must trust the platform SSH User CA.
+- Your GitHub-registered user must have the required project group permission.
+- You must connect as the image's normal cloud user, such as `ubuntu` for Ubuntu images.
+
+The connection goes to `ssh.mustelinet.com` on port `2222`, not directly to the tenant floating IP.
+
+<Callout title="🛡️ SSH still needs a security group rule" type="warn">
+  mustelinet SSH handles authentication and routing, but the VM must still allow TCP `22` from `0.0.0.0/0` so the proxy can reach it.
+</Callout>
+
+## Floating IPs in this model
+
+In standard OpenStack language, a floating IP is an address that can be associated with an instance or load balancer. On mustelinet, the current tenant floating IP range is `10.50.0.0/24`. Treat these as edge-facing tenant addresses used by mustelinet routing, not as direct public internet IPs.
+
+Use the generated DNS name for users, custom DNS `CNAME` targets, monitoring, and route identification.
+
+## Security groups still matter
+
+DNS and edge routing do not bypass security groups. If the VM or load balancer blocks a port, the generated DNS name and edge route cannot make the service reachable.
+
+Open only the ports your workload needs, and remove temporary test rules after troubleshooting.

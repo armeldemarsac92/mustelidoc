@@ -1,0 +1,113 @@
+---
+title: "First VM 3: expose and connect"
+description: Associate a floating IP, find the generated DNS name, allow SSH, and connect through mustelinet SSH.
+---
+
+import { Globe2, Route, ShieldCheck, Terminal } from 'lucide-react';
+
+To access the VM from outside the project network, associate a tenant floating IP and use the generated mustelinet route. Tenant SSH goes through mustelinet SSH. Do not SSH directly to the `10.50.0.0/24` floating IP address from the public internet.
+
+<Callout title="🚪 Use the mustelinet SSH route, not the floating IP" type="warn">
+  The tenant floating IP is part of mustelinet routing. Use the generated route and `ssh.mustelinet.com` instead of trying to SSH directly to the floating IP.
+</Callout>
+
+For mustelinet SSH to route to the VM:
+
+- The VM must have an associated floating IP.
+- The VM security group must allow inbound TCP port `22` from `0.0.0.0/0`.
+- The VM must trust the platform SSH User CA.
+- Your user must be allowed by the project access policy.
+
+<Cards>
+  <Card icon={<ShieldCheck />} title="Security group">
+    Allow TCP `22` from `0.0.0.0/0` so the mustelinet SSH proxy can reach the VM.
+  </Card>
+  <Card icon={<Globe2 />} title="Floating IP">
+    Associate a tenant floating IP to the VM or VM port.
+  </Card>
+  <Card icon={<Route />} title="Generated route">
+    Use the VM/project route generated from OpenStack inventory and floating IP ownership.
+  </Card>
+  <Card icon={<Terminal />} title="OpenSSH client">
+    Connect to `ssh.mustelinet.com` on port `2222` and complete GitHub SSO when prompted.
+  </Card>
+</Cards>
+
+## Allow SSH in the security group
+
+1. Open Network, then Security Groups.
+2. Open the security group attached to your VM.
+3. Manage rules.
+4. Add an ingress SSH rule:
+
+| Field | Value |
+| --- | --- |
+| Rule or protocol | `SSH` or TCP |
+| Port | `22` |
+| Remote | `CIDR` |
+| CIDR | `0.0.0.0/0` |
+
+OpenStack's dashboard documentation uses the same SSH rule shape: SSH, remote CIDR, and CIDR `0.0.0.0/0`. On mustelinet, this is required for the mustelinet SSH edge path.
+
+Do not replace `0.0.0.0/0` with your own public IP for mustelinet SSH. The connection is relayed by the mustelinet proxy, so the VM sees the proxy as the source instead of your workstation's public IP.
+
+## Allocate a floating IP
+
+1. Open Network, then Floating IPs.
+2. Click Allocate IP.
+3. Select the public network shown for your project.
+4. Confirm the allocation.
+
+The floating IP now belongs to your project and consumes quota, but it is not useful until associated to the VM.
+
+See [Floating IPs](/docs/networking/floating-ips) for the full tenant model.
+
+## Associate the floating IP
+
+1. Stay on Network, Floating IPs.
+2. Find the floating IP row.
+3. On the right side of its row, open More.
+4. Click Associate.
+5. Select the VM or VM port you created.
+6. Confirm the association.
+
+You can also associate from the instance actions in Compute, Instances when Skyline exposes Related Resources, Associate Floating IP.
+
+## Find the generated DNS name
+
+1. Open DNS or Designate in Skyline.
+2. Open the project DNS zone under `apps.mustelinet.com`.
+3. Find the generated record for your VM's floating IP. VM records follow the `<vm_id>.<project_id>.apps.mustelinet.com` convention.
+
+Use this generated name for tenant access, custom DNS `CNAME` targets, and route identification. Do not point public users directly at the tenant floating IP.
+
+See [Generated app DNS names](/docs/networking/dns-names) for custom domain guidance.
+
+## Connect with mustelinet SSH
+
+mustelinet SSH uses OpenSSH on `ssh.mustelinet.com` port `2222`. Deduce the route from the VM name and project name:
+
+```bash
+ssh -p 2222 <vm-username>@<vm-name>-<project-name>@ssh.mustelinet.com
+```
+
+For Ubuntu images, the user is usually `ubuntu`:
+
+```bash
+ssh -p 2222 ubuntu@<vm-name>-<project-name>@ssh.mustelinet.com
+```
+
+The SSH flow may open GitHub SSO through `auth.mustelinet.com` in your browser. Complete the sign-in, then return to the terminal; the SSH session continues after authentication succeeds.
+
+The route part is `<vm-name>-<project-name>`. The login user is the VM username, such as `ubuntu` for Ubuntu images.
+
+The host is the mustelinet SSH route at `ssh.mustelinet.com`, not the tenant floating IP.
+
+If the route does not work yet, wait about 15 seconds after associating the floating IP, then retry. Route generation depends on the OpenStack VM inventory and floating IP association.
+
+## Official reference
+
+- [Skyline Console: Create a floating IP](https://docs.openstack.org/skyline-console/latest/user/network.html#create-a-fip)
+- [Skyline Console: Associate floating IP from an instance](https://docs.openstack.org/skyline-console/latest/user/compute.html#allocate-a-floating-ip-to-an-instance)
+- [OpenStack dashboard: SSH security group rule and floating IP association](https://docs.openstack.org/horizon/latest/user/configure-access-and-security-for-instances.html)
+- [SSH access](/docs/access/ssh-access)

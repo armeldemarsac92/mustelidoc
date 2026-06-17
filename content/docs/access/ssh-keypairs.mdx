@@ -1,0 +1,79 @@
+---
+title: SSH keypairs (optional)
+description: Manage optional SSH keypairs for tenant Linux instances.
+---
+
+import { KeyRound, LockKeyhole, Network, Terminal } from 'lucide-react';
+
+A keypair lets you inject an SSH public key into a Linux instance at boot time. On mustelinet, keypairs are not the normal external SSH access path. External tenant SSH uses mustelinet SSH and GitHub SSO through `auth.mustelinet.com`.
+
+SSH keypairs can still be useful when you need SSH between VMs on the same project subnet and the security groups allow that traffic.
+
+<Callout title="🔑 Optional for most tenant SSH" type="info">
+  Use mustelinet SSH for external access. Create a keypair only when the image, launch workflow, or VM-to-VM access pattern requires it.
+</Callout>
+
+<Cards>
+  <Card icon={<Terminal />} title="External SSH" href="/docs/access/ssh-access">
+    Use mustelinet SSH, GitHub SSO, and the route on `ssh.mustelinet.com`.
+  </Card>
+  <Card icon={<Network />} title="VM-to-VM SSH">
+    Keypairs can help when one VM must SSH to another inside the same project network.
+  </Card>
+  <Card icon={<KeyRound />} title="Import public keys only">
+    Paste public keys into Skyline. Keep private keys outside OpenStack and version control.
+  </Card>
+  <Card icon={<LockKeyhole />} title="Rotate exposed keys">
+    If a private key is lost or leaked, replace the keypair and update affected instances.
+  </Card>
+</Cards>
+
+## Create or import a keypair
+
+1. Open Compute, then Key Pairs.
+2. Choose Create Key Pair or Import Key Pair.
+3. If Skyline generates a keypair, download the private key immediately.
+4. If you import a keypair, paste only the public key.
+5. Select the keypair when creating an instance only if your workflow needs key-based SSH inside the project network.
+
+## Protect the private key
+
+The private key belongs to you. The platform cannot recover it if you lose it.
+
+Keep private keys out of:
+
+- Git repositories.
+- Terraform state.
+- Shared chat systems.
+- Shared messages or issue notes.
+
+If a private key is lost or exposed, create a new keypair and rotate access on affected instances.
+
+## Choose the right SSH user
+
+The default SSH username depends on the image. Common examples include:
+
+| Image family | Common SSH user |
+| --- | --- |
+| Ubuntu | `ubuntu` |
+| Debian | `debian` |
+| Rocky or CentOS | `rocky`, `centos`, or `cloud-user` |
+
+Root SSH is denied by policy for tenant access. Use the image's normal cloud user and privilege escalation inside the VM when allowed by the image.
+
+## SSH keypairs and mustelinet SSH
+
+mustelinet SSH is the external tenant SSH path. A keypair alone does not grant external SSH access to a VM.
+
+For mustelinet SSH to work, the VM must trust the platform SSH User CA. New VMs should receive that trust through platform-provided cloud-init or vendordata. Older VMs may need the trust files applied manually or cloud-init rerun if they were created before this bootstrap was enabled.
+
+## VM-to-VM SSH
+
+If you need to SSH from one VM to another VM on the same subnet:
+
+- Import or create a keypair.
+- Launch the target VM with the public key.
+- Keep the private key only on the source VM or in your own secure storage.
+- Add a security group rule that allows TCP port `22` from the source VM, source subnet, or source security group.
+
+Do not open extra SSH paths unless the workload needs them.

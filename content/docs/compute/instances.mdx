@@ -1,0 +1,105 @@
+---
+title: Instances
+description: Create, inspect, connect to, and delete tenant virtual machines in Skyline.
+---
+
+import { Database, Globe2, Network, Server, ShieldCheck, Trash2 } from 'lucide-react';
+
+Instances are virtual machines in your OpenStack project. A typical tenant VM needs an image, flavor, network, security group rules, and usually a floating IP for tenant access through mustelinet edge services. SSH keypairs are optional for workflows such as VM-to-VM SSH inside a project subnet.
+
+<Cards>
+  <Card icon={<Server />} title="Image and flavor">
+    Choose the operating system and compute size that match the workload and quota.
+  </Card>
+  <Card icon={<Network />} title="Project network" href="/docs/networking/networks-and-routers">
+    Attach the VM to a network with the router path your access model needs.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Security group" href="/docs/networking/security-groups">
+    Allow only the ports needed for SSH, HTTP, HTTPS, or the application.
+  </Card>
+  <Card icon={<Globe2 />} title="Floating IP" href="/docs/networking/floating-ips">
+    Associate one when the VM needs generated DNS, public app access, or mustelinet SSH.
+  </Card>
+</Cards>
+
+## Before you create an instance
+
+Prepare these tenant resources first:
+
+- An SSH keypair only if your image, launch workflow, or VM-to-VM SSH use case needs one.
+- A security group that allows only the traffic you need.
+- A project network connected through a router, or another network path provided by your project.
+- A plan for storage: ephemeral disk, boot volume, or attached data volume.
+- A floating IP if the VM must be reachable through generated DNS names, HTTP/HTTPS edge routing, or mustelinet SSH.
+
+## Create an instance
+
+1. In Skyline, switch to the correct project.
+2. Open Compute, then Instances.
+3. Choose Create Instance or Launch Instance.
+4. Enter a clear instance name. Include the app or environment name if your project has many VMs.
+5. Select an image. Ubuntu images normally use the `ubuntu` default SSH user.
+6. Select a flavor with enough vCPU, RAM, and disk for the workload.
+7. Select the target network.
+8. Attach an SSH keypair only if your workflow needs one.
+9. Attach one or more security groups.
+10. Add a boot volume or extra volume if the workload needs persistent storage.
+11. Review the request and create the instance.
+
+Creation can take a few minutes. Watch the instance status until it becomes active.
+
+## Associate a floating IP
+
+A floating IP is required for most tenant-facing access paths, including generated DNS names, public HTTP/HTTPS app routing, and mustelinet SSH routes.
+
+<Callout title="🧭 Floating IPs are route anchors" type="info">
+  Public users should normally use generated names under `apps.mustelinet.com` or mustelinet SSH routes, not the raw floating IP address.
+</Callout>
+
+To associate one:
+
+1. Open Network, then Floating IPs.
+2. Allocate a floating IP from the public network if you do not already have one.
+3. Associate it with the instance port.
+4. Return to the instance details page and confirm the floating IP appears on the instance.
+
+The current tenant floating IP range is `10.50.0.0/24`. Treat these as edge-facing tenant addresses used by mustelinet routing, not as direct public internet IPs. Public users normally reach your app by using generated DNS names under `apps.mustelinet.com`.
+
+## Inspect status and console
+
+Use the instance details page to check:
+
+- Power state and task state.
+- Fixed IPs and floating IPs.
+- Attached volumes.
+- Security groups.
+- Console log and web console, when exposed.
+
+The web console is useful for first-boot troubleshooting, cloud-init errors, and confirming whether SSH is running.
+
+## Delete an instance
+
+Before deleting, decide what should happen to attached resources.
+
+<Callout title="🧹 Deleting a VM may leave billable or quota-consuming resources" type="warn">
+  Check floating IPs, volumes, security groups, keypairs, and generated DNS names after deleting an instance.
+</Callout>
+
+Deleting an instance normally removes the VM and its ephemeral disk. It may not delete:
+
+- Floating IPs allocated to the project.
+- Security groups.
+- SSH keypairs.
+- Volumes that were created separately or marked to persist.
+- DNS names generated from a floating IP that still exists.
+
+Release unused floating IPs and delete unused volumes when you are done with them. Otherwise they may keep consuming quota.
+
+<Cards>
+  <Card icon={<Trash2 />} title="Release unused floating IPs" href="/docs/networking/floating-ips">
+    Free quota when the address no longer backs a VM, load balancer, or route.
+  </Card>
+  <Card icon={<Database />} title="Delete unused volumes" href="/docs/storage/volumes">
+    Detached data volumes can survive instance deletion and keep consuming quota.
+  </Card>
+</Cards>

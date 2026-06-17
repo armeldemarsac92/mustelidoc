@@ -1,0 +1,10 @@
+packages:
+  - "mustelidoc"
+
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+
+blockExoticSubdeps: true
+strictDepBuilds: true
+trustPolicy: no-downgrade

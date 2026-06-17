@@ -1,0 +1,12 @@
+{
+  "title": "Getting Started",
+  "defaultOpen": true,
+  "pages": [
+    "before-you-start",
+    "skyline-overview",
+    "how-access-works",
+    "first-vm-network",
+    "first-vm-instance",
+    "first-vm-access"
+  ]
+}

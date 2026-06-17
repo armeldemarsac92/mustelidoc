@@ -1,0 +1,90 @@
+---
+title: "First VM 1: create a network"
+description: Prepare the project network, subnet, router, and external gateway before launching your first VM.
+---
+
+import { Globe2, Network, Route, ShieldCheck } from 'lucide-react';
+
+Start by creating a project network. The VM will attach to this network, and the router will give the network a path to the public gateway used for floating IP access.
+
+## Before you start
+
+Confirm that you are in the correct Skyline project. Networks, subnets, routers, and floating IPs are project resources.
+
+<Callout title="🧱 Build networking before compute" type="info">
+  A VM can boot without a complete router and gateway, but floating IP access and edge routing will not work correctly until the network path is complete.
+</Callout>
+
+You will create:
+
+- One project network.
+- One subnet on that network.
+- One router attached to the subnet.
+- An external gateway on that router using the public gateway.
+
+<Cards>
+  <Card icon={<Network />} title="Project network">
+    The private network that instances attach to.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Subnet">
+    Addressing, DHCP, gateway, DNS, allocation pools, and routes for the network.
+  </Card>
+  <Card icon={<Route />} title="Router">
+    Connects the subnet to the project router path.
+  </Card>
+  <Card icon={<Globe2 />} title="External gateway">
+    Gives the router access to the public gateway used by floating IP routing.
+  </Card>
+</Cards>
+
+For a deeper explanation of these resources, see [Networks and routers](/docs/networking/networks-and-routers).
+
+## Create the network and subnet
+
+1. Open Network, then Networks.
+2. Click Create Network.
+3. If Skyline shows a Quick Create option, use it for a first VM.
+4. Choose a network name, such as `first-vm-net`.
+5. Create a subnet at the same time.
+6. For the default path, let the cloud choose the subnet values.
+7. If you customize the subnet, choose a private CIDR that does not overlap with your other project networks.
+8. Keep DHCP enabled unless you have a specific reason to manage addresses yourself.
+
+Official Skyline documentation notes that a network without a subnet cannot be attached to an instance. It also lists the subnet fields Skyline can expose, including CIDR, IP version, gateway IP, DHCP, allocation pools, DNS, and host routes.
+
+## Create and attach a router
+
+If the Quick Create form includes Create and Attach Router, check it. This should create a router and connect your new subnet to it.
+
+If your project already has a suitable router, you can use that router instead. The router must have:
+
+- An interface connected to your new subnet.
+- An external gateway configured.
+
+If you need to create the router manually:
+
+1. Open Network, then Routers.
+2. Click Create Router.
+3. Enter a router name, such as `first-vm-router`.
+4. Check External Gateway.
+5. Select the public gateway.
+6. Create the router.
+7. From the router row, open More, then connect the subnet you created.
+
+Skyline's official router workflow uses Network, Routers, Create Router, External Gateway, and then More, connect Subnet to connect a private network to the router.
+
+## Confirm the topology
+
+Open Network, then Topology if it is available. You should see:
+
+- Your project network.
+- Your subnet.
+- A router connected to the subnet.
+- The router connected to the public gateway.
+
+If the router or external gateway is missing, fix that before launching the VM. The VM can still boot without it, but floating IP and edge access will not work correctly.
+
+## Official reference
+
+- [Skyline Console: Create and manage networks](https://docs.openstack.org/skyline-console/latest/user/network.html)
+- [Networks and routers](/docs/networking/networks-and-routers)

@@ -1,0 +1,76 @@
+---
+title: Security groups
+description: Allow only the tenant traffic your instances and applications need.
+---
+
+import { Globe2, ShieldCheck, Terminal, Wrench } from 'lucide-react';
+
+Security groups are project firewall rules applied to instance ports. They control whether traffic can reach your VM or load balancer.
+
+DNS names and public edge proxying do not bypass security group rules. If your VM blocks a port, the generated DNS name and edge route cannot make the application reachable.
+
+For standard mustelinet public access paths, do not try to restrict the security group source to the end user's public IP. Incoming HTTP/HTTPS and mustelinet SSH traffic is relayed by the mustelinet proxy or edge, so the VM sees the proxy as the source, not the original user IP.
+
+<Callout title="🛡️ Use narrow ports with the edge source model" type="warn">
+  For standard mustelinet SSH and public HTTP/HTTPS paths, use source `0.0.0.0/0` with only the exact ports your workload needs.
+</Callout>
+
+<Cards>
+  <Card icon={<Terminal />} title="SSH through mustelinet SSH" href="/docs/access/ssh-access">
+    Allow TCP `22` from `0.0.0.0/0`.
+  </Card>
+  <Card icon={<Globe2 />} title="HTTP and HTTPS" href="/docs/access/http-https-apps">
+    Allow TCP `80` and/or TCP `443` from `0.0.0.0/0`.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Least access">
+    Create application-specific groups and avoid extra ports.
+  </Card>
+  <Card icon={<Wrench />} title="Troubleshooting" href="/docs/troubleshooting/common-tenant-issues#security-group-missing-inbound-rule">
+    Check the rule, source, port, and attached VM or load balancer.
+  </Card>
+</Cards>
+
+## Start from least access
+
+Create a security group per application or role when possible. Give it only the inbound rules needed by that workload.
+
+Common inbound rules:
+
+| Purpose | Protocol | Port | Source |
+| --- | --- | --- | --- |
+| SSH through mustelinet SSH | TCP | `22` | `0.0.0.0/0` |
+| HTTP app | TCP | `80` | `0.0.0.0/0` |
+| HTTPS app | TCP | `443` | `0.0.0.0/0` |
+| Minecraft app, when enabled | TCP | `25565` | `0.0.0.0/0` |
+
+Only open the ports your workload needs. The `0.0.0.0/0` source is required for the mustelinet edge and mustelinet SSH routing model because proxied traffic does not preserve the end user's public IP as the packet source seen by the VM. Pair broad source CIDRs with narrow port rules and application-level authentication where applicable.
+
+## Allow SSH
+
+For tenant SSH, use mustelinet SSH through the mustelinet public edge. The VM still needs an inbound security group rule allowing TCP port `22` from `0.0.0.0/0`.
+
+SSH access also depends on:
+
+- The VM having a floating IP.
+- The VM image supporting SSH.
+- The VM trusting the platform SSH User CA.
+- Your GitHub-registered user having the right project group permission.
+
+## Allow HTTP and HTTPS
+
+For web applications, add inbound rules for the ports the edge is expected to reach:
+
+- TCP `80` from `0.0.0.0/0` for HTTP.
+- TCP `443` from `0.0.0.0/0` for HTTPS.
+
+The application must listen on the VM or load balancer behind the floating IP. A DNS record alone is not enough.
+
+Restrict users at the application or route policy layer. Security group source CIDRs are not a reliable way to allow specific public user IPs for proxied public access.
+
+## Review outbound rules
+
+Many projects allow outbound traffic by default. If your project uses restricted egress, allow the destinations your workload needs, such as package repositories, object storage endpoints, or managed service endpoints.
+
+## Clean up unused rules
+
+Remove rules that were only needed for testing. Do not leave extra application ports open just because SSH, HTTP, or HTTPS need `0.0.0.0/0` source rules for the standard edge paths.

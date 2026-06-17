@@ -1,0 +1,86 @@
+---
+title: Before you start
+description: Confirm the access, project context, and basic terms you need before creating tenant resources.
+---
+
+import { CloudCog, KeyRound, Network, Rocket, Terminal } from 'lucide-react';
+
+Use this checklist before you create your first VM, publish an app, or start using Terraform.
+
+## Registration and permissions
+
+You cannot register by opening Skyline directly. New users receive an invite link.
+
+Use the invite link to complete registration with GitHub through `auth.mustelinet.com`, then wait for the mustelinet team to configure the right group permissions for your OpenStack project. See [Invites and project access](/docs/access/invites-and-project-access) for the full flow.
+
+<Callout title="🔐 Access is a two-step process" type="warn">
+  Completing GitHub registration does not automatically grant project access. Wait for the mustelinet team to configure group permissions before creating resources.
+</Callout>
+
+## What you need
+
+Before using mustelinet as a tenant, make sure you have:
+
+- A mustelinet invite link.
+- Completed GitHub registration through `auth.mustelinet.com`.
+- Group permissions configured for the OpenStack project you plan to use.
+- The Skyline dashboard URL: `https://skyline.mustelinet.com`.
+- Enough project quota for the resources you want to create.
+- A browser for Skyline and mustelinet SSH sign-in.
+- OpenSSH on your workstation if you need VM shell access.
+- Terraform and an application credential if you want repeatable automation.
+
+If you completed registration but cannot access Skyline or do not see the expected project, wait for the project group permissions to be configured before creating resources.
+
+<Cards>
+  <Card icon={<KeyRound />} title="Invite and project access" href="/docs/access/invites-and-project-access">
+    Use this when login works but the expected project or permissions are missing.
+  </Card>
+  <Card icon={<Network />} title="First VM network" href="/docs/getting-started/first-vm-network">
+    Build the project network, subnet, router, and external gateway before launching a VM.
+  </Card>
+  <Card icon={<Terminal />} title="mustelinet SSH" href="/docs/access/ssh-access">
+    Check the tenant SSH route and requirements before troubleshooting shell access.
+  </Card>
+  <Card icon={<CloudCog />} title="Terraform" href="/docs/automation/terraform">
+    Use application credentials and local-only secrets for repeatable environments.
+  </Card>
+</Cards>
+
+## Basic terms
+
+| Term | Meaning |
+| --- | --- |
+| Tenant | A user or team consuming the cloud through an OpenStack project. These docs are written for tenants, not platform operators. |
+| Project | The OpenStack scope that owns instances, networks, volumes, floating IPs, application credentials, and quotas. |
+| Skyline | The web dashboard for creating, inspecting, and troubleshooting tenant resources. |
+| Instance | A virtual machine in your project. |
+| Image | The operating system template used to boot an instance. |
+| Flavor | The vCPU, RAM, and disk size selected for an instance. |
+| Project network | The private network your instances attach to. |
+| Router | The network resource that connects a project network to the provider or external gateway. |
+| Security group | Project firewall rules applied to instance or load balancer ports. |
+| Floating IP | An address from the tenant floating IP range. On mustelinet, this range is used by the edge model and is not a public internet IP range to connect to directly. |
+| Generated DNS name | A mustelinet DNS name under `apps.mustelinet.com` generated from floating IP ownership. VM names use the `<vm_id>.<project_id>.apps.mustelinet.com` convention. |
+| mustelinet SSH | The standard tenant SSH path. It authenticates users through GitHub SSO at `auth.mustelinet.com` instead of direct internet SSH to a floating IP. |
+| Application credential | A project-scoped OpenStack credential for Terraform, CI, and API automation. |
+
+## First resource path
+
+For a first VM, build the path in this order:
+
+1. Confirm the project in Skyline.
+2. Create a project network, subnet, router, and external gateway.
+3. Launch the VM on that network.
+4. Add the required security group rule.
+5. Associate a floating IP.
+6. Find the generated DNS name.
+7. Connect through mustelinet SSH.
+
+The result is a VM that is reachable through mustelinet access routes while still keeping direct project networking separate from public user access.
+
+## When to use Skyline or Terraform
+
+Use Skyline when you are learning the platform, creating a small number of resources, inspecting state, or troubleshooting.
+
+Use Terraform when the resources should be repeatable, reviewed by a team, rebuilt later, or kept consistent across environments.

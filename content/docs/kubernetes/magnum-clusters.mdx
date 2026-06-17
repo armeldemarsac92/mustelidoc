@@ -1,0 +1,86 @@
+---
+title: Kubernetes clusters with Magnum
+description: Create and inspect tenant Kubernetes clusters with OpenStack Magnum.
+---
+
+import { Clock, CloudCog, FileWarning, Network } from 'lucide-react';
+
+Magnum provides tenant Kubernetes clusters from OpenStack. Use Skyline to inspect clusters and templates. Use Terraform when cluster creation should be repeatable.
+
+<Callout title="🧭 Plan before creating clusters" type="info">
+  Magnum requests consume quota across compute, networking, and storage. Decide the template, node count, flavor, network, and kubeconfig handling before submitting the request.
+</Callout>
+
+## Current tenant template
+
+The current tenant-facing Kubernetes template is:
+
+| Field | Value |
+| --- | --- |
+| Cluster template | `k8s-capi-helm-ubuntu-v1.34.7` |
+| Node image | `ubuntu-jammy-kube-v1.34.7` |
+| Kubernetes version | `v1.34.7` |
+
+Use the template name shown in Skyline or Terraform. If the visible template list differs, use the template documented by your project onboarding before creating the cluster.
+
+<Cards>
+  <Card icon={<CloudCog />} title="Template">
+    Use the tenant-facing CAPI Helm template shown in Skyline or onboarding.
+  </Card>
+  <Card icon={<Network />} title="Network and access">
+    Confirm network, floating IP, security group, and app exposure requirements.
+  </Card>
+  <Card icon={<FileWarning />} title="Kubeconfig">
+    Treat generated kubeconfigs as sensitive files and keep them out of Git.
+  </Card>
+  <Card icon={<Clock />} title="Creation time">
+    Wait for a clear final state before deleting and recreating a cluster.
+  </Card>
+</Cards>
+
+## Find cluster templates
+
+Depending on Skyline navigation, look under Kubernetes, Container Infra, or Magnum. Open Cluster Templates to confirm:
+
+- Template name.
+- Kubernetes version.
+- Node image.
+- Allowed networking and flavor options.
+
+Templates define what tenants can request. They do not expose the platform's internal Magnum implementation.
+
+## Plan a cluster
+
+Before creating a cluster, decide:
+
+- Project and quota.
+- Cluster template.
+- Worker node count.
+- Node flavor.
+- Keypair, if requested by the form.
+- Network and floating IP requirements.
+- Security groups and app exposure model.
+- Where the kubeconfig will be stored.
+
+Generated kubeconfigs are sensitive. Do not commit or share them.
+
+<Callout title="🔒 Keep kubeconfigs private" type="warn">
+  A kubeconfig can grant cluster access. Store it like a secret and never commit it.
+</Callout>
+
+## Create from Skyline
+
+1. Switch to the correct project.
+2. Open Kubernetes, Container Infra, or Magnum.
+3. Choose Create Cluster.
+4. Select `k8s-capi-helm-ubuntu-v1.34.7` when available.
+5. Enter the cluster name, node count, flavor, and required network details.
+6. Submit the request and monitor cluster status.
+
+Cluster creation can take time. Backend polling errors or temporary status messages do not always mean final failure. Avoid deleting and recreating repeatedly unless the cluster reaches a clear failed state.
+
+## Use Terraform for repeatable clusters
+
+Terraform is often better for Magnum because it keeps cluster size, template choice, generated files, and related network resources together. The mustelinet tenant workflow should use the public CAPI Helm template values exposed to tenants, not internal driver details.
+
+Keep generated cluster files under a local `generated/` directory when applicable, and exclude kubeconfigs and private keys from version control.

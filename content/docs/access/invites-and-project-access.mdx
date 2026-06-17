@@ -1,0 +1,72 @@
+---
+title: Invites and project access
+description: Understand invite registration, GitHub SSO, auth.mustelinet.com, and project group permissions.
+---
+
+import { BadgeCheck, KeyRound, ShieldCheck } from 'lucide-react';
+
+mustelinet users do not self-register by opening Skyline directly. Access starts with an invite link.
+
+<Callout title="🪪 Registration and authorization are separate" type="info">
+  The invite registers your GitHub identity. Project group permissions decide what Skyline, mustelinet SSH, and API tools let you access.
+</Callout>
+
+## Registration flow
+
+1. Open the mustelinet invite link you received.
+2. Complete registration with GitHub through `auth.mustelinet.com`.
+3. Wait for the mustelinet team to configure the right project group permissions.
+4. After permissions are in place, open `https://skyline.mustelinet.com`.
+5. Sign in with GitHub SSO. GitHub is the only SSO option.
+
+`auth.mustelinet.com` handles the SSO/OIDC flow for mustelinet. As a tenant, the important point is that you sign in with the GitHub account that was registered from the invite.
+
+<Cards>
+  <Card icon={<KeyRound />} title="Invite link">
+    Use the invite to register the GitHub account that will access mustelinet.
+  </Card>
+  <Card icon={<BadgeCheck />} title="GitHub SSO">
+    Sign in through `auth.mustelinet.com`; GitHub is the tenant SSO provider.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Project group">
+    Wait for the mustelinet team to attach the right OpenStack project permission.
+  </Card>
+  <Card icon={<KeyRound />} title="Access details">
+    Keep your GitHub username, project, and attempted action available when access looks wrong.
+  </Card>
+</Cards>
+
+## Project group permissions
+
+Registration proves who you are. Project group permissions decide what you can access.
+
+After registration, the mustelinet team configures group permissions for the OpenStack project you should use. Until that is done:
+
+- Skyline may deny access.
+- Skyline may open but show no project.
+- Project resources may be missing.
+- mustelinet SSH routes may reject you even when the VM route exists.
+
+Common project groups include names such as:
+
+| Group | Typical meaning |
+| --- | --- |
+| `openstack:<project>:member` | Standard project tenant access. |
+| `openstack:<project>:admin` | Elevated project tenant access when granted. |
+
+Use the exact group names and access level assigned by mustelinet for your project.
+
+## When access is not ready
+
+Wait for project access to be configured if:
+
+- You completed invite registration but cannot sign in to Skyline.
+- You can sign in but do not see the expected project.
+- mustelinet SSH says you are not allowed for a route you should be able to use.
+- Terraform or API tools authenticate but cannot see expected project resources.
+
+Record your GitHub username, project name, and the action you attempted. Do not include passwords, application credential secrets, private keys, kubeconfigs, `clouds.yaml`, or Terraform state in shared notes.
+
+<Callout title="🔒 Never include secrets in shared notes" type="warn">
+  Error text and screenshots are useful. Passwords, application credential secrets, private keys, kubeconfigs, `clouds.yaml`, and Terraform state are not.
+</Callout>

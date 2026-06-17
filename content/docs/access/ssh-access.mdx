@@ -1,0 +1,102 @@
+---
+title: SSH access
+description: Connect to tenant VMs through mustelinet SSH.
+---
+
+import { BadgeCheck, Globe2, ShieldCheck, Terminal } from 'lucide-react';
+
+Tenant SSH access uses mustelinet SSH through the mustelinet public edge. Users should not SSH directly to tenant floating IP addresses from the public internet.
+
+For mustelinet SSH to route to a VM, the VM must have an associated floating IP and its security group must allow inbound TCP port `22` from `0.0.0.0/0`.
+
+Do not replace `0.0.0.0/0` with your own public IP. mustelinet SSH relays the connection, so the VM sees the proxy as the source, not your workstation's public IP.
+
+SSH keypairs are not the normal external SSH access method on mustelinet. mustelinet SSH authenticates users with GitHub SSO through `auth.mustelinet.com` and short-lived SSH credentials, and the VM accepts them when it trusts the platform SSH User CA.
+
+<Callout title="🚫 Do not connect to the floating IP directly" type="warn">
+  Connect to `ssh.mustelinet.com` on port `2222`. The floating IP anchors the route, but it is not the SSH destination for tenant users.
+</Callout>
+
+<Cards>
+  <Card icon={<Globe2 />} title="Floating IP">
+    The VM must have a floating IP associated to the instance port.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Security group">
+    Allow TCP `22` from `0.0.0.0/0` for the mustelinet SSH proxy path.
+  </Card>
+  <Card icon={<BadgeCheck />} title="GitHub SSO">
+    Authenticate through `auth.mustelinet.com` and match the project route policy.
+  </Card>
+  <Card icon={<Terminal />} title="Image user">
+    Use the normal cloud user for the image, such as `ubuntu`, not `root`.
+  </Card>
+</Cards>
+
+## How tenant SSH works
+
+```text
+user
+  -> mustelinet SSH
+  -> GitHub SSO through auth.mustelinet.com
+  -> route policy and group check
+  -> short-lived SSH credentials
+  -> VM that trusts the platform SSH User CA
+```
+
+mustelinet SSH authenticates you through GitHub SSO at `auth.mustelinet.com`, checks the route policy and project group permission, then grants short-lived SSH access. The VM accepts that access only if it trusts the platform SSH User CA.
+
+When you connect, the SSH flow may open GitHub SSO in your browser. Complete the sign-in, then return to the terminal; the SSH session continues after authentication succeeds.
+
+## Requirements
+
+SSH access depends on all of these being true:
+
+- The VM has a floating IP.
+- A mustelinet SSH route exists for the VM.
+- The VM security group allows TCP port `22` from `0.0.0.0/0`.
+- The VM image supports SSH.
+- The VM trusts the platform SSH User CA.
+- Your GitHub-registered user has the required project group permission, such as `openstack:<project>:admin` or `openstack:<project>:member`.
+- You connect as the image's normal cloud user, not as `root`.
+
+Ubuntu images usually use `ubuntu` as the SSH user.
+
+## SSH syntax
+
+mustelinet SSH routes are generated from OpenStack VM inventory. Deduce the route from the VM name and project name:
+
+```bash
+ssh -p 2222 <vm-username>@<vm-name>-<project-name>@ssh.mustelinet.com
+```
+
+For Ubuntu images, the user is usually `ubuntu`:
+
+```bash
+ssh -p 2222 ubuntu@<vm-name>-<project-name>@ssh.mustelinet.com
+```
+
+The route part is `<vm-name>-<project-name>`. If a new VM route does not work yet, confirm the VM has an associated floating IP and wait for inventory reconciliation.
+
+The generated DNS name for the VM's floating IP can also help identify the route. In Skyline, open the DNS or Designate page and look for the generated record under your project zone.
+
+## Bootstrap trust on the VM
+
+New VMs should receive trust for the platform SSH User CA through platform-provided cloud-init or vendordata.
+
+Existing VMs may need trust files applied manually or cloud-init rerun if they were created before the trust bootstrap was enabled. If you suspect this, record the instance name, project, image, creation time, and floating IP for follow-up.
+
+## Common failure patterns
+
+| Symptom | Tenant checks |
+| --- | --- |
+| Route missing | Confirm the VM has a floating IP and is in the expected project. |
+| Permission denied before certificate use | Confirm your project group permission has been configured and the route policy allows it. |
+| Certificate rejected by VM | Confirm the VM trusts the platform SSH User CA. |
+| Connection times out | Confirm the security group allows TCP `22` from `0.0.0.0/0` and check instance network status. |
+| Login user rejected | Confirm the image default user, such as `ubuntu`. |
+
+Root SSH is denied by policy. Use the normal image user.
+
+<Callout title="👤 Root SSH is not the tenant path" type="info">
+  Connect as the image's default user, then use privilege escalation inside the VM only when the image and project policy allow it.
+</Callout>

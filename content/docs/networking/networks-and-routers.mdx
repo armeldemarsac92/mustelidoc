@@ -1,0 +1,74 @@
+---
+title: Networks and routers
+description: Understand project networks, subnets, routers, and how they relate to floating IPs.
+---
+
+import { Globe2, Network, Route, ShieldCheck } from 'lucide-react';
+
+Project networks connect your instances to each other. Routers connect project networks to external or provider networks so instances can use floating IPs and reach services outside the project network.
+
+<Cards>
+  <Card icon={<Network />} title="Network">
+    The project-local L2 network that instances, routers, and service ports attach to.
+  </Card>
+  <Card icon={<ShieldCheck />} title="Subnet">
+    The CIDR, DHCP, gateway, DNS, and allocation settings for the network.
+  </Card>
+  <Card icon={<Route />} title="Router">
+    Connects the subnet to the external or provider gateway path.
+  </Card>
+  <Card icon={<Globe2 />} title="Floating IP path" href="/docs/networking/floating-ips">
+    Requires the router path plus floating IP association and security group rules.
+  </Card>
+</Cards>
+
+## Find networks
+
+Open Network, then Networks. A project network usually has:
+
+- A network name.
+- One or more subnets.
+- Ports for instances, load balancers, routers, or Kubernetes nodes.
+
+When launching an instance, select the project network that matches the application environment.
+
+## Find routers
+
+Open Network, then Routers. A router commonly provides:
+
+- An internal interface on your project subnet.
+- An external gateway toward the provider network.
+
+If an instance cannot use a floating IP or reach expected external services, confirm the network has a router path configured for your project.
+
+<Callout title="🧭 Missing router path breaks later access" type="warn">
+  The VM may still boot, but floating IP association, generated routes, and external reachability depend on the intended network and router path.
+</Callout>
+
+## Create a basic project network
+
+If your project allows self-service networking:
+
+1. Create a network.
+2. Create a subnet with a private CIDR for your project.
+3. Create or select a router.
+4. Attach the subnet to the router.
+5. Set the router external gateway when required by the project design.
+
+Use Terraform for repeatable network and router creation. It reduces drift between test, staging, and production-like tenant environments.
+
+For a first VM in Skyline, use the Quick Create path when it is available. Create the subnet with the network, check Create and Attach Router, check External Gateway, and select the public gateway. If those quick options are not available, create the router from Network, Routers, then connect the subnet from the router's More menu.
+
+Skyline's official network documentation notes that a network without a subnet cannot be attached to an instance. Its router workflow creates a router, checks External Gateway, selects the external gateway, and connects a subnet from the router actions.
+
+## Do not publish private ports by assumption
+
+Having a project network and router does not automatically publish every VM port to public users. Public tenant access normally depends on a floating IP, generated DNS name, edge route, and security group rules.
+
+<Callout title="🔒 Private networking is not public publishing" type="info">
+  Treat networking as the foundation. Public access still needs generated DNS, edge routing, and allowed application ports.
+</Callout>
+
+## Official reference
+
+- [Skyline Console: Create and manage networks](https://docs.openstack.org/skyline-console/latest/user/network.html)

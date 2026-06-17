@@ -1,0 +1,93 @@
+---
+title: Generated app DNS names
+description: Understand how mustelinet generates tenant DNS names for floating IPs.
+---
+
+import { ExternalLink, Globe2, RefreshCw, Route, ShieldCheck } from 'lucide-react';
+
+mustelinet generates tenant DNS records from OpenStack floating IP ownership. You do not need to manually set Neutron floating IP `dns_name` or `dns_domain` fields for the default generated DNS path.
+
+<Callout title="🌐 Generated names come from floating IP ownership" type="info">
+  Associate the floating IP to the VM or load balancer first, then wait briefly for reconciliation before troubleshooting missing records.
+</Callout>
+
+<Cards>
+  <Card icon={<Route />} title="Floating IP association" href="/docs/networking/floating-ips">
+    The association is the source of truth for generated route records.
+  </Card>
+  <Card icon={<RefreshCw />} title="Automatic reconciliation">
+    Records are normally created within about 15 seconds after association.
+  </Card>
+  <Card icon={<Globe2 />} title="Generated hostname">
+    Use `<vm_id>.<project_id>.apps.mustelinet.com` for VM-backed records.
+  </Card>
+  <Card icon={<ExternalLink />} title="Custom domain">
+    Point your own DNS name at the generated mustelinet name with a `CNAME`.
+  </Card>
+</Cards>
+
+## How generated names work
+
+Tenant-facing behavior:
+
+- Neutron floating IPs are the source of truth.
+- The platform reconciles floating IPs into OpenStack Designate records.
+- Generated records point to tenant floating IPs.
+- Names are generated from floating IP ownership metadata and project identity.
+- Generated names live under tenant or project-specific child zones of `apps.mustelinet.com`.
+- Records are created automatically, usually within 15 seconds after the floating IP is associated to a VM or load balancer.
+
+VM generated DNS names use this convention:
+
+```text
+<vm_id>.<project_id>.apps.mustelinet.com
+```
+
+Use IDs, not display names, when matching the generated record to a VM and project.
+
+## Find the generated name
+
+In Skyline, open the DNS or Designate page and look for the generated record in your project DNS zone. That is the preferred place to copy the generated name.
+
+Depending on your project permissions and Skyline configuration, the same name may also appear in:
+
+- Floating IP details.
+- Instance metadata or displayed floating IP metadata, if enabled.
+- Tenant onboarding or resource summaries.
+
+If you do not see a generated name immediately after associating the floating IP, wait about 15 seconds and refresh. DNS records are reconciled automatically from OpenStack inventory.
+
+## What generated names are for
+
+Generated names are intended for:
+
+- Public HTTP/HTTPS edge routing for tenant applications.
+- mustelinet SSH route matching.
+- Monitoring and user access.
+- Stable references to a VM or load balancer behind a floating IP.
+
+They are not a promise that the floating IP address is directly reachable from the public internet.
+
+## Use your own domain
+
+If you own another DNS name, create a `CNAME` at your DNS provider that points to the generated mustelinet name.
+
+```text
+app.example.com. CNAME <vm_id>.<project_id>.apps.mustelinet.com.
+```
+
+Do not point public users directly at the tenant floating IP address. Use the generated name as the stable target for your `CNAME`.
+
+## Tenant responsibilities
+
+For the generated name to work end to end:
+
+- Keep the floating IP allocated and associated to the right origin.
+- Run the app on the expected port.
+- Allow the required port from `0.0.0.0/0` in the security group.
+- Use the generated DNS name as the public hostname.
+- For HTTPS, configure the certificate or app endpoint expected by your workload.
+
+<Callout title="⚠️ DNS does not prove the app is reachable" type="warn">
+  The name can resolve while the app still fails because the port is closed, the app is not listening, or HTTPS certificate/SNI behavior is wrong.
+</Callout>

@@ -1,0 +1,16 @@
+{
+  "title": "Mustelinet",
+  "pages": [
+    "index",
+    "quick-reference",
+    "getting-started",
+    "compute",
+    "storage",
+    "networking",
+    "access",
+    "identity",
+    "kubernetes",
+    "automation",
+    "troubleshooting"
+  ]
+}
