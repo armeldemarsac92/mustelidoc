@@ -2,7 +2,12 @@ import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import type { Metadata } from 'next';
 
-const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:8080');
+function getMetadataBase() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:8080';
+  return new URL(siteUrl.includes('://') ? siteUrl : `https://${siteUrl}`);
+}
+
+const metadataBase = getMetadataBase();
 
 export const metadata: Metadata = {
   metadataBase,

@@ -53,7 +53,8 @@ ghcr.io/armeldemarsac92/mustelidoc
 ```
 
 Set the repository variable `NEXT_PUBLIC_SITE_URL` to the public docs URL before
-publishing production images.
+publishing production images. Both `https://doc.mustelinet.com` and
+`doc.mustelinet.com` are accepted.
 
 ## Explore
 
