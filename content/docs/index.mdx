@@ -3,14 +3,14 @@ title: Mustelinet tenant documentation
 description: Use the mustelinet OpenStack cloud from Skyline, Terraform, generated DNS names, and tenant access tools.
 ---
 
-import { Activity, CloudCog, FileText, Globe2, KeyRound, Network, Rocket, ShieldCheck } from 'lucide-react';
+import { Activity, CloudCog, FileText, Globe2, KeyRound, Monitor, Network, Rocket, ShieldCheck } from 'lucide-react';
 
-Welcome to the mustelinet tenant documentation. These pages explain how to use the Skyline dashboard, create tenant resources, publish applications through generated DNS names, connect to VMs through mustelinet SSH, and automate repeatable environments with Terraform.
+Welcome to the mustelinet tenant documentation. These pages explain how to use the Skyline dashboard, create tenant resources, log in to VMs through Skyline console or mustelinet SSH, publish applications through generated DNS names, and automate repeatable environments with Terraform.
 
 The docs are written for cloud tenants. They avoid platform operator procedures and focus on the actions you can take in your own OpenStack project.
 
 <Callout title="🧭 Tenant-focused guide" type="info">
-  Start with access and project scope, then build resources in the same order Skyline expects: network, VM, floating IP, generated DNS name, and access route.
+  Start with access and project scope, then build resources in the same order Skyline expects: network, VM, and either console login or intentional route exposure.
 </Callout>
 
 <Cards>
@@ -21,7 +21,10 @@ The docs are written for cloud tenants. They avoid platform operator procedures 
     Copy service URLs, route formats, identifier rules, and Terraform auth values.
   </Card>
   <Card icon={<Network />} title="Create your first VM" href="/docs/getting-started/first-vm-network">
-    Create the network first, then launch the VM and connect through mustelinet SSH.
+    Create the network first, then launch the VM and choose console or SSH access.
+  </Card>
+  <Card icon={<Monitor />} title="Console access" href="/docs/access/console-access">
+    Log in from Skyline with a VM password without exposing SSH.
   </Card>
   <Card icon={<Globe2 />} title="Publish web apps" href="/docs/access/http-https-apps">
     Use generated DNS names and the public HTTP/HTTPS edge.
@@ -49,12 +52,13 @@ If this is your first time using mustelinet, read these in order:
 3. [How access works](/docs/getting-started/how-access-works).
 4. [Create the network, subnet, router, and external gateway](/docs/getting-started/first-vm-network).
 5. [Launch the VM on that network](/docs/getting-started/first-vm-instance).
-6. [Expose the VM route and connect through mustelinet SSH](/docs/getting-started/first-vm-access).
+6. [Use Skyline console access](/docs/access/console-access), or [expose the VM route and connect through mustelinet SSH](/docs/getting-started/first-vm-access).
 
 ## Common tenant tasks
 
 - Learn where Skyline shows projects, instances, images, flavors, networks, routers, floating IPs, volumes, Kubernetes clusters, and application credentials.
 - Create Linux instances with networks, security group rules, and optional SSH keypairs.
+- Use Skyline console login with a VM password when the VM should not expose SSH.
 - Use generated `apps.mustelinet.com` DNS names as the stable public names for VMs and load balancers.
 - Reach tenant web apps through the public edge on HTTP or HTTPS.
 - Connect to VMs through mustelinet SSH when the VM and project policy allow it.

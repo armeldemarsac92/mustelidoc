@@ -3,9 +3,9 @@ title: Instances
 description: Create, inspect, connect to, and delete tenant virtual machines in Skyline.
 ---
 
-import { Database, Globe2, Network, Server, ShieldCheck, Trash2 } from 'lucide-react';
+import { Database, Globe2, Monitor, Network, Server, ShieldCheck, Terminal, Trash2 } from 'lucide-react';
 
-Instances are virtual machines in your OpenStack project. A typical tenant VM needs an image, flavor, network, security group rules, and usually a floating IP for tenant access through mustelinet edge services. SSH keypairs are optional for workflows such as VM-to-VM SSH inside a project subnet.
+Instances are virtual machines in your OpenStack project. A typical tenant VM needs an image, flavor, network, and security group rules. Skyline console access can work without a floating IP; generated DNS, public app access, and mustelinet SSH need floating IP exposure through the mustelinet edge model. SSH keypairs are optional for workflows such as VM-to-VM SSH inside a project subnet.
 
 <Cards>
   <Card icon={<Server />} title="Image and flavor">
@@ -17,6 +17,12 @@ Instances are virtual machines in your OpenStack project. A typical tenant VM ne
   <Card icon={<ShieldCheck />} title="Security group" href="/docs/networking/security-groups">
     Allow only the ports needed for SSH, HTTP, HTTPS, or the application.
   </Card>
+  <Card icon={<Monitor />} title="Console access" href="/docs/access/console-access">
+    Use a VM password for dashboard-only login without floating IP exposure.
+  </Card>
+  <Card icon={<Terminal />} title="Pomerium SSH" href="/docs/access/ssh-access">
+    Expose SSH through the mustelinet route when you need external shell access.
+  </Card>
   <Card icon={<Globe2 />} title="Floating IP" href="/docs/networking/floating-ips">
     Associate one when the VM needs generated DNS, public app access, or mustelinet SSH.
   </Card>
@@ -26,7 +32,7 @@ Instances are virtual machines in your OpenStack project. A typical tenant VM ne
 
 Prepare these tenant resources first:
 
-- An SSH keypair only if your image, launch workflow, or VM-to-VM SSH use case needs one.
+- A login plan: use Password for Skyline console access, or an SSH keypair only when your image, launch workflow, or VM-to-VM SSH use case needs one.
 - A security group that allows only the traffic you need.
 - A project network connected through a router, or another network path provided by your project.
 - A plan for storage: ephemeral disk, boot volume, or attached data volume.
@@ -41,12 +47,25 @@ Prepare these tenant resources first:
 5. Select an image. Ubuntu images normally use the `ubuntu` default SSH user.
 6. Select a flavor with enough vCPU, RAM, and disk for the workload.
 7. Select the target network.
-8. Attach an SSH keypair only if your workflow needs one.
-9. Attach one or more security groups.
-10. Add a boot volume or extra volume if the workload needs persistent storage.
-11. Review the request and create the instance.
+8. In System Config, choose Login Type `Password` if you want Skyline console login without exposing SSH.
+9. Set Login Name to the image's default user and enter a strong Login Password.
+10. Choose Keypair only if your workflow needs key-based SSH.
+11. Attach one or more security groups.
+12. Add a boot volume or extra volume if the workload needs persistent storage.
+13. Review the request and create the instance.
 
 Creation can take a few minutes. Watch the instance status until it becomes active.
+
+## Access paths after creation
+
+Use the path that matches how the VM should be reached:
+
+| Access path | What to do | Floating IP required |
+| --- | --- | --- |
+| Skyline console | Open the instance Console action and log in with the VM username and password. | No |
+| mustelinet SSH through Pomerium | Associate a floating IP, allow TCP `22`, and connect to `ssh.mustelinet.com:2222`. | Yes |
+
+Console access is useful for first boot, troubleshooting, and VMs that should not expose SSH. See [Console access](/docs/access/console-access) for usernames and password reset behavior.
 
 ## Associate a floating IP
 
@@ -75,7 +94,27 @@ Use the instance details page to check:
 - Security groups.
 - Console log and web console, when exposed.
 
-The web console is useful for first-boot troubleshooting, cloud-init errors, and confirming whether SSH is running.
+The web console is useful for first-boot troubleshooting and confirming whether SSH is running.
+
+## Default console usernames
+
+| Image family | Console username |
+| --- | --- |
+| Ubuntu images | `ubuntu` |
+| Debian images | `debian` |
+| Fedora Cloud | `fedora` |
+| AlmaLinux | `almalinux` |
+| Rocky Linux | `rocky` |
+| Alpine | `alpine` |
+| Fedora CoreOS | `core` |
+
+Use normal server or cloud images for interactive console login. Fedora CoreOS, Trove, Magnum/Kubernetes, appliance, and cluster-node images are not the default choice for a normal interactive VM login flow.
+
+## Change a console password
+
+If Skyline exposes Set Password or Change Password for an existing VM, that action changes the local password inside the VM. It depends on QEMU Guest Agent support inside the guest and on the VM having been created with the guest-agent channel available.
+
+If the VM is old or the guest agent is unavailable, rebuild or recreate the instance from a supported image, then set the password again. Do not assume Skyline can recover access to every existing VM.
 
 ## Delete an instance
 

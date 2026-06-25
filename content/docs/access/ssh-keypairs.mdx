@@ -5,9 +5,11 @@ description: Manage optional SSH keypairs for tenant Linux instances.
 
 import { KeyRound, LockKeyhole, Network, Terminal } from 'lucide-react';
 
-A keypair lets you inject an SSH public key into a Linux instance at boot time. On mustelinet, keypairs are not the normal external SSH access path. External tenant SSH uses mustelinet SSH and GitHub SSO through `auth.mustelinet.com`.
+A keypair lets you inject an SSH public key into a Linux instance at boot time. On mustelinet, keypairs are not the normal external SSH access path. External tenant SSH uses Pomerium-backed mustelinet SSH and GitHub SSO through `auth.mustelinet.com`.
 
 SSH keypairs can still be useful when you need SSH between VMs on the same project subnet and the security groups allow that traffic.
+
+If you only need dashboard console access, choose Login Type `Password` when creating the VM and use [Skyline console access](/docs/access/console-access) instead of creating a keypair.
 
 <Callout title="🔑 Optional for most tenant SSH" type="info">
   Use mustelinet SSH for external access. Create a keypair only when the image, launch workflow, or VM-to-VM access pattern requires it.
@@ -15,7 +17,7 @@ SSH keypairs can still be useful when you need SSH between VMs on the same proje
 
 <Cards>
   <Card icon={<Terminal />} title="External SSH" href="/docs/access/ssh-access">
-    Use mustelinet SSH, GitHub SSO, and the route on `ssh.mustelinet.com`.
+    Use Pomerium-backed mustelinet SSH, GitHub SSO, and the route on `ssh.mustelinet.com`.
   </Card>
   <Card icon={<Network />} title="VM-to-VM SSH">
     Keypairs can help when one VM must SSH to another inside the same project network.
@@ -63,9 +65,7 @@ Root SSH is denied by policy for tenant access. Use the image's normal cloud use
 
 ## SSH keypairs and mustelinet SSH
 
-mustelinet SSH is the external tenant SSH path. A keypair alone does not grant external SSH access to a VM.
-
-For mustelinet SSH to work, the VM must trust the platform SSH User CA. New VMs should receive that trust through platform-provided cloud-init or vendordata. Older VMs may need the trust files applied manually or cloud-init rerun if they were created before this bootstrap was enabled.
+Pomerium-backed mustelinet SSH is the external tenant SSH path. A keypair alone does not grant external SSH access to a VM.
 
 ## VM-to-VM SSH
 

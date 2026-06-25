@@ -1,22 +1,25 @@
 ---
 title: How access works
-description: Understand how generated DNS names, the public edge, floating IPs, security groups, and mustelinet SSH fit together.
+description: Understand Skyline console access, generated DNS names, floating IPs, security groups, and mustelinet SSH.
 ---
 
-import { Globe2, Network, Route, ShieldCheck, Terminal } from 'lucide-react';
+import { Globe2, Monitor, Network, Route, ShieldCheck, Terminal } from 'lucide-react';
 
-mustelinet uses OpenStack resources plus platform edge services. The important idea is that a floating IP is a route target for the edge model; users normally access apps and SSH routes through hostnames, not by connecting directly to the floating IP address.
+mustelinet uses OpenStack resources plus platform edge services. The important idea is that VM access has two different tenant paths: Skyline console access stays inside the dashboard, while web apps and SSH routes use floating IPs as route targets for the edge model.
 
 <Callout title="🧭 Use names and routes, not raw floating IPs" type="info">
-  Tenant-facing access is hostname-driven. Floating IPs anchor generated DNS records and edge routes, but users should normally use generated names, custom `CNAME` records, or mustelinet SSH routes.
+  Edge-routed access is hostname-driven. Floating IPs anchor generated DNS records and edge routes, but users should normally use generated names, custom `CNAME` records, or mustelinet SSH routes.
 </Callout>
 
 <Cards>
+  <Card icon={<Monitor />} title="Console" href="/docs/access/console-access">
+    Skyline console login with a VM password, without floating IP exposure.
+  </Card>
   <Card icon={<Globe2 />} title="Web apps" href="/docs/access/http-https-apps">
     Generated DNS name, public edge, floating IP, app port, and security group rule.
   </Card>
   <Card icon={<Terminal />} title="SSH" href="/docs/access/ssh-access">
-    mustelinet SSH route, GitHub SSO, and VM trust.
+    mustelinet SSH route, GitHub SSO, and image user.
   </Card>
   <Card icon={<Route />} title="Floating IPs" href="/docs/networking/floating-ips">
     Tenant floating IP addresses used by mustelinet routing and generated names.
@@ -25,6 +28,19 @@ mustelinet uses OpenStack resources plus platform edge services. The important i
     Firewall rules still decide whether the edge can reach the VM or load balancer.
   </Card>
 </Cards>
+
+## VM access paths
+
+Choose the path that matches the access you need:
+
+| Path | What it uses | Floating IP needed | Security group exposure |
+| --- | --- | --- | --- |
+| Skyline console | Browser console plus the VM's local username and password | No | No inbound SSH rule |
+| mustelinet SSH through Pomerium | `ssh.mustelinet.com:2222`, route policy, and the VM SSH service | Yes | TCP `22` from `0.0.0.0/0` |
+
+For console-only access, choose Login Type `Password` during VM creation and log in from the instance Console action after the VM has booted. This is the right path when you need access without associating a floating IP or exposing SSH.
+
+For normal external SSH, use the mustelinet SSH route. That path requires a floating IP, route generation, a matching security group rule, and a VM image that supports SSH.
 
 ## Web app access
 
@@ -58,7 +74,7 @@ Do not restrict these rules to the end user's public IP. Public traffic is relay
 
 ## SSH access
 
-Tenant SSH uses mustelinet SSH:
+Tenant SSH uses Pomerium-backed mustelinet SSH:
 
 ```text
 user
@@ -66,7 +82,7 @@ user
   -> GitHub SSO through auth.mustelinet.com
   -> route policy and project group check
   -> short-lived SSH access
-  -> VM that trusts the platform SSH User CA
+  -> VM SSH service
 ```
 
 For this to work:
@@ -76,7 +92,6 @@ For this to work:
 - A mustelinet SSH route must exist for the VM.
 - The security group must allow TCP `22` from `0.0.0.0/0`.
 - The VM image must support SSH.
-- The VM must trust the platform SSH User CA.
 - Your GitHub-registered user must have the required project group permission.
 - You must connect as the image's normal cloud user, such as `ubuntu` for Ubuntu images.
 

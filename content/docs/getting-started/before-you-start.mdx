@@ -24,10 +24,10 @@ Before using mustelinet as a tenant, make sure you have:
 - A mustelinet invite link.
 - Completed GitHub registration through `auth.mustelinet.com`.
 - Group permissions configured for the OpenStack project you plan to use.
-- The Skyline dashboard URL: `https://skyline.mustelinet.com`.
+- The Skyline dashboard URL: `https://skyline.openstack.mustelinet.com`.
 - Enough project quota for the resources you want to create.
 - A browser for Skyline and mustelinet SSH sign-in.
-- OpenSSH on your workstation if you need VM shell access.
+- OpenSSH on your workstation if you need external VM shell access through mustelinet SSH.
 - Terraform and an application credential if you want repeatable automation.
 
 If you completed registration but cannot access Skyline or do not see the expected project, wait for the project group permissions to be configured before creating resources.
@@ -62,7 +62,8 @@ If you completed registration but cannot access Skyline or do not see the expect
 | Security group | Project firewall rules applied to instance or load balancer ports. |
 | Floating IP | An address from the tenant floating IP range. On mustelinet, this range is used by the edge model and is not a public internet IP range to connect to directly. |
 | Generated DNS name | A mustelinet DNS name under `apps.mustelinet.com` generated from floating IP ownership. VM names use the `<vm_id>.<project_id>.apps.mustelinet.com` convention. |
-| mustelinet SSH | The standard tenant SSH path. It authenticates users through GitHub SSO at `auth.mustelinet.com` instead of direct internet SSH to a floating IP. |
+| Skyline console | Dashboard VM access through the instance console. It can be used with a VM password without floating IP exposure. |
+| mustelinet SSH | The Pomerium-backed tenant SSH path. It authenticates users through GitHub SSO at `auth.mustelinet.com` instead of direct internet SSH to a floating IP. |
 | Application credential | A project-scoped OpenStack credential for Terraform, CI, and API automation. |
 
 ## First resource path
@@ -72,12 +73,11 @@ For a first VM, build the path in this order:
 1. Confirm the project in Skyline.
 2. Create a project network, subnet, router, and external gateway.
 3. Launch the VM on that network.
-4. Add the required security group rule.
-5. Associate a floating IP.
-6. Find the generated DNS name.
-7. Connect through mustelinet SSH.
+4. Choose Login Type `Password` for Skyline console access, or plan mustelinet SSH exposure.
+5. For console-only access, open the VM Console after the VM is active.
+6. For external SSH or public apps, add the required security group rule, associate a floating IP, find the generated DNS name, and use the mustelinet route.
 
-The result is a VM that is reachable through mustelinet access routes while still keeping direct project networking separate from public user access.
+The result is a VM you can reach through Skyline console access, or through mustelinet access routes when you intentionally expose it.
 
 ## When to use Skyline or Terraform
 

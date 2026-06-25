@@ -1,0 +1,106 @@
+---
+title: Console access
+description: Log in to tenant VMs from the Skyline console without exposing SSH.
+---
+
+import { KeyRound, Monitor, ShieldCheck } from 'lucide-react';
+
+Skyline console access lets you log in through the VM's virtual display from the dashboard. Use it when you need interactive access without associating a floating IP or exposing SSH through mustelinet SSH.
+
+<Callout title="🔒 Console access stays inside Skyline" type="info">
+  A VM can be reached from the Skyline console without a floating IP, generated DNS name, inbound SSH security group rule, or Pomerium SSH route.
+</Callout>
+
+<Cards>
+  <Card icon={<Monitor />} title="Skyline console">
+    Open the VM console from Compute, Instances after the VM has booted.
+  </Card>
+  <Card icon={<KeyRound />} title="VM password">
+    Choose Login Type `Password` when creating the VM.
+  </Card>
+  <Card icon={<ShieldCheck />} title="No SSH exposure">
+    Use this path when the VM does not need external SSH access.
+  </Card>
+</Cards>
+
+## Console or SSH
+
+Use one of these paths depending on what you need:
+
+| Path | Use when | Needs floating IP | Needs inbound TCP `22` |
+| --- | --- | --- | --- |
+| Skyline console with password | You need dashboard-only interactive access. | No | No |
+| mustelinet SSH through Pomerium | You need normal external SSH access from your workstation. | Yes | Yes |
+
+The console password is a password inside the VM's operating system. It is not your OpenStack, Skyline, GitHub, or mustelinet SSO password.
+
+## Create a VM for console login
+
+This is the normal path for a new VM. Set the password during creation, then use that password from the console after the guest has booted.
+
+1. Create a new VM from a supported general-purpose server or cloud image.
+2. In System Config, set Login Type to `Password`.
+3. Set Login Name to the default user for the image, such as `ubuntu` for Ubuntu.
+4. Enter a strong Login Password and confirm it.
+5. Create the VM.
+6. Wait until the VM is `ACTIVE` and has finished booting.
+7. In Skyline, open Compute, then Instances.
+8. Open the instance actions menu and choose Console.
+9. Log in with the image username and the password you set during creation.
+
+For interactive console login, prefer normal server or cloud images. Do not treat Trove, Magnum/Kubernetes, appliance, or cluster-node images as normal interactive-login images unless your project has a specific reason.
+
+## Default console usernames
+
+| Image family | Console username |
+| --- | --- |
+| Ubuntu images | `ubuntu` |
+| Debian images | `debian` |
+| Fedora Cloud | `fedora` |
+| AlmaLinux | `almalinux` |
+| Rocky Linux | `rocky` |
+| Alpine | `alpine` |
+| Fedora CoreOS | `core` |
+
+Fedora CoreOS is listed for recognition, but it is not the recommended default image family for a normal interactive console-login VM.
+
+For day-to-day shell work, use [mustelinet SSH](/docs/access/ssh-access) after exposing the VM through the Pomerium-backed SSH route.
+
+## Change the password after creation
+
+Some Skyline deployments expose an instance action named Set Password or Change Password. Use it when you need to reset or rotate the local VM password after the VM exists.
+
+This is different from choosing Login Type `Password` during VM creation. Creation-time password setup is the preferred path for new console-login VMs; Set Password or Change Password is the later reset path.
+
+This action depends on guest support:
+
+- The VM must be active.
+- The image must have QEMU Guest Agent support enabled when the VM is created.
+- `qemu-guest-agent` must be installed and running inside the guest.
+- VMs created before QEMU Guest Agent metadata was enabled may not have the required guest-agent channel.
+
+If the VM was created before guest-agent support was enabled, the safest tenant-facing recovery path is to rebuild or recreate the instance from a supported image, then set the password again. Do not assume Skyline can recover access to every existing VM.
+
+## Troubleshooting
+
+If console login says `Login incorrect`:
+
+- Confirm you used the correct image username.
+- Confirm the VM was created with Login Type `Password`, or that a later Set Password or Change Password action completed successfully.
+- Wait a minute after boot and try again.
+- If you changed the password after creation, wait briefly and retry the Set Password or Change Password action.
+- Reboot the VM and try the console login again.
+
+If Set Password or Change Password fails:
+
+- The image may not have `qemu-guest-agent` installed or running.
+- The VM may have been created before guest-agent metadata was enabled.
+- Rebuild or recreate the VM from a supported image.
+
+For an inaccessible VM without guest-agent support, rescue or rebuild remains the recovery path.
+
+## Official reference
+
+- [Skyline Console: Launch and manage instances](https://docs.openstack.org/skyline-console/latest/user/compute.html)
+- [OpenStack Compute API: Server consoles and passwords](https://docs.openstack.org/api-ref/compute/)
+- [OpenStack image properties: QEMU Guest Agent](https://docs.openstack.org/glance/latest/admin/useful-image-properties.html)

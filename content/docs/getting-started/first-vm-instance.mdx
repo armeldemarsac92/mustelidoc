@@ -1,25 +1,29 @@
 ---
 title: "First VM 2: launch the instance"
-description: Create your first VM in Skyline and attach it to the project network.
+description: Create your first VM in Skyline, attach it to the project network, and choose how you will log in.
 ---
 
 import { KeyRound, Network, Server, ShieldCheck } from 'lucide-react';
 
 After the project network is ready, launch the VM from the Compute tab and attach it to that network.
 
-## Decide whether you need an SSH keypair
+If you only need dashboard access to the VM, choose a password during creation and log in later from the Skyline console. That path does not require a floating IP, a generated DNS name, an inbound SSH security group rule, or a mustelinet SSH route.
 
-External SSH access to mustelinet VMs uses mustelinet SSH, not keypair-based direct SSH from the internet. You usually do not need an SSH keypair for the external tenant access path.
+## Decide how you will log in
 
-<Callout title="🔑 Keypairs are not the public SSH path" type="info">
-  mustelinet SSH is the standard external tenant path. Create a keypair only when the image, launch form, or internal project workflow requires one.
+For console-only access, use Login Type `Password` during instance creation. The password is set inside the VM's operating system and is used with the image's normal console username.
+
+External SSH access to mustelinet VMs uses Pomerium-backed mustelinet SSH, not keypair-based direct SSH from the internet. You usually do not need an SSH keypair for the external tenant access path.
+
+<Callout title="🔐 Console password is not your Skyline password" type="info">
+  The password you enter for the VM is a local guest operating system password. It is not your OpenStack, Skyline, GitHub, or mustelinet SSO password.
 </Callout>
 
 Create or import an SSH keypair only if:
 
 - Your selected image or launch form requires one.
 - You want VM-to-VM SSH inside the same project network.
-- Your project has a specific bootstrap workflow that uses SSH keypairs.
+- Your project has a specific internal workflow that uses SSH keypairs.
 
 If you need one:
 
@@ -39,10 +43,10 @@ See [SSH keypairs](/docs/access/ssh-keypairs) for the full tenant guidance.
     Select the network and subnet created in the previous guide.
   </Card>
   <Card icon={<ShieldCheck />} title="Attach security group">
-    Use a group you can later update for mustelinet SSH or app publishing.
+    Use a group for the workload. Console login does not need an inbound SSH rule.
   </Card>
-  <Card icon={<KeyRound />} title="Use keypair only when needed">
-    Choose Keypair only when the image or workflow requires it.
+  <Card icon={<KeyRound />} title="Console password">
+    Choose Password when you want Skyline console login without exposing SSH.
   </Card>
 </Cards>
 
@@ -55,21 +59,30 @@ See [SSH keypairs](/docs/access/ssh-keypairs) for the full tenant guidance.
 7. Click Next: Network Config.
 8. Select the network you created in [First VM 1: create a network](/docs/getting-started/first-vm-network).
 9. Select the subnet or virtual interface for that network.
-10. Attach the security group you plan to use for SSH.
+10. Attach the security group for the workload. Console login does not require an inbound SSH rule.
 11. Click Next: System Config.
 12. Enter the instance name.
-13. If Skyline requires a login type, choose the option that matches your project workflow. Choose Keypair only when you created or imported one for this VM.
-14. Confirm the configuration and create the instance.
+13. For console login, choose Login Type `Password`.
+14. Set Login Name to the default user for the image, such as `ubuntu` for Ubuntu.
+15. Enter a strong Login Password and confirm it.
+16. Choose Keypair only when you created or imported one for this VM and need that workflow.
+17. Confirm the configuration and create the instance.
 
 Skyline's official instance workflow describes the Network Config step as the place where you add networks, choose the virtual interface, and select security groups.
+It also exposes Login Type options in System Config, including `Password`.
+
+For common image usernames, see [Default console usernames](/docs/access/console-access#default-console-usernames).
 
 ## Wait for the VM
 
 Return to Compute, Instances and wait for the VM to become active.
 
-Use the instance details, console log, or web console if the VM does not boot as expected. Do not continue to floating IP and mustelinet SSH until the VM is active.
+After the VM is active and has finished booting, open the instance Console action in Skyline and log in with the image username and the password you set during creation.
+
+Use the instance details, console log, or web console if the VM does not boot as expected. Do not continue to floating IP and mustelinet SSH unless you need external tenant access.
 
 ## Official reference
 
 - [Skyline Console: Launch and manage instances](https://docs.openstack.org/skyline-console/latest/user/compute.html)
+- [Console access](/docs/access/console-access)
 - [Instances](/docs/compute/instances)

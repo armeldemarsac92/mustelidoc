@@ -3,6 +3,7 @@
   "defaultOpen": true,
   "pages": [
     "invites-and-project-access",
+    "console-access",
     "http-https-apps",
     "ssh-access",
     "ssh-keypairs"

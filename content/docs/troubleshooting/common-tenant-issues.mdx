@@ -1,9 +1,9 @@
 ---
 title: Common tenant issues
-description: Tenant-focused checks for Skyline, DNS, app access, SSH, floating IPs, and Magnum.
+description: Tenant-focused checks for Skyline, console login, DNS, app access, SSH, floating IPs, and Magnum.
 ---
 
-import { Activity, Clock, FileText, Globe2, Search, ShieldCheck, Terminal } from 'lucide-react';
+import { Activity, Clock, FileText, Globe2, Monitor, Search, ShieldCheck, Terminal } from 'lucide-react';
 
 Use these checks before changing tenant resources. They focus on tenant-visible state and avoid platform operator commands.
 
@@ -14,8 +14,11 @@ Use these checks before changing tenant resources. They focus on tenant-visible 
   <Card icon={<Search />} title="Skyline access" href="/docs/troubleshooting/common-tenant-issues#cannot-log-in-to-skyline">
     Start here when login works incorrectly or the expected project is missing.
   </Card>
+  <Card icon={<Monitor />} title="Console login" href="/docs/troubleshooting/common-tenant-issues#cannot-log-in-from-the-skyline-console">
+    Check password setup, image username, and VM boot state.
+  </Card>
   <Card icon={<Terminal />} title="SSH" href="/docs/troubleshooting/common-tenant-issues#cannot-ssh-to-a-vm">
-    Check VM state, floating IP, route, security group, user, permissions, and VM trust.
+    Check VM state, floating IP, route, security group, user, and permissions.
   </Card>
   <Card icon={<Globe2 />} title="Web app access" href="/docs/troubleshooting/common-tenant-issues#web-app-dns-name-resolves-but-the-app-does-not-load">
     Check generated DNS, app listener, security group, hostname, and HTTPS behavior.
@@ -41,10 +44,31 @@ Check:
 
 - You used the mustelinet invite link to complete registration.
 - You registered through GitHub at `auth.mustelinet.com`.
-- You are using `https://skyline.mustelinet.com`.
+- You are using `https://skyline.openstack.mustelinet.com`.
 - The mustelinet team has configured your project group permissions.
 
 If registration is complete but Skyline still denies access or shows no project, wait for group permissions to be applied.
+
+## Cannot log in from the Skyline console
+
+Check:
+
+- The VM is active and has finished booting.
+- You selected Login Type `Password` when creating the VM, or you successfully used Set Password or Change Password later.
+- You are using the correct image username, such as `ubuntu` for Ubuntu, `debian` for Debian, or `fedora` for Fedora Cloud.
+
+If login says `Login incorrect`, wait a minute after boot and retry with the correct image username.
+
+## Set Password or Change Password fails
+
+Check:
+
+- The VM is active.
+- The image has `qemu-guest-agent` installed and running.
+- The VM was created after QEMU Guest Agent metadata was enabled for the image, so Nova attached the guest-agent channel at boot.
+- You are using a supported general-purpose server or cloud image.
+
+If the VM was created before guest-agent support was enabled, rebuild or recreate the instance from a supported image, then use Set Password or Change Password again. Do not assume Skyline can recover access to every existing VM; rescue or rebuild is still the recovery path for an inaccessible VM without guest-agent support.
 
 ## Cannot SSH to a VM
 
@@ -56,7 +80,6 @@ Check:
 - The security group allows TCP `22` from `0.0.0.0/0`.
 - You are using the image default user, such as `ubuntu` for Ubuntu.
 - Your GitHub-registered user has the required project group permission.
-- The VM trusts the platform SSH User CA.
 
 Root SSH is denied by policy.
 
@@ -70,17 +93,6 @@ Check:
 - The instance name is clear enough to identify in generated route views.
 
 If it remains missing, record the project, instance name, instance ID if visible, floating IP, and creation time.
-
-## SSH certificate rejected
-
-Check:
-
-- You authenticated through mustelinet SSH successfully.
-- Your project group permission allows the route.
-- The VM trusts the platform SSH User CA.
-- The VM was created after trust bootstrap was enabled, or has had trust files applied.
-
-Older VMs may need trust bootstrap applied manually or cloud-init rerun.
 
 ## Web app DNS name resolves but the app does not load
 

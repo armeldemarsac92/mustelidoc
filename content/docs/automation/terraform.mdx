@@ -62,7 +62,7 @@ Terraform resources should follow the same tenant model:
 Use the mustelinet Keystone/OpenStack authentication URL:
 
 ```text
-https://keystone.mustelinet.com
+https://keystone.openstack.mustelinet.com
 ```
 
 Use this as the `auth_url` with an application credential from the correct project. Do not commit `clouds.yaml` or credential material.
@@ -88,7 +88,7 @@ clouds:
   mustelinet:
     auth_type: v3applicationcredential
     auth:
-      auth_url: https://keystone.mustelinet.com
+      auth_url: https://keystone.openstack.mustelinet.com
       application_credential_id: <application-credential-id>
       application_credential_secret: <application-credential-secret>
     interface: public

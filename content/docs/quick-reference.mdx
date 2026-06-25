@@ -8,8 +8,8 @@ import { Activity, CloudCog, Globe2, KeyRound, Search, Terminal } from 'lucide-r
 Use this page when you already know what you are trying to do and need the exact URL, route format, or value source.
 
 <Cards>
-  <Card icon={<Search />} title="Skyline dashboard" href="https://skyline.mustelinet.com">
-    `https://skyline.mustelinet.com`
+  <Card icon={<Search />} title="Skyline dashboard" href="https://skyline.openstack.mustelinet.com">
+    `https://skyline.openstack.mustelinet.com`
   </Card>
   <Card icon={<KeyRound />} title="Authentication">
     `auth.mustelinet.com`
@@ -21,7 +21,7 @@ Use this page when you already know what you are trying to do and need the exact
     `apps.mustelinet.com`
   </Card>
   <Card icon={<CloudCog />} title="OpenStack auth URL">
-    `https://keystone.mustelinet.com`
+    `https://keystone.openstack.mustelinet.com`
   </Card>
   <Card icon={<Activity />} title="Service status" href="https://stats.uptimerobot.com/DwWzvE7wS8">
     Check uptime before debugging tenant resources.
@@ -32,15 +32,30 @@ Use this page when you already know what you are trying to do and need the exact
 
 | What you need | Format | Source |
 | --- | --- | --- |
+| Skyline console path | Compute, Instances, Console | Use after creating the VM with Login Type `Password`. |
 | Generated VM DNS name | `<vm_id>.<project_id>.apps.mustelinet.com` | Skyline DNS or Designate page after floating IP association. |
 | SSH command | `ssh -p 2222 <vm-username>@<vm-name>-<project-name>@ssh.mustelinet.com` | VM username comes from the image; VM name and project name come from Skyline. |
-| Ubuntu SSH username | `ubuntu` | Ubuntu cloud images normally use this user. |
-| OpenStack auth URL | `https://keystone.mustelinet.com` | Use with application credentials for Terraform and API automation. |
+| Ubuntu console or SSH username | `ubuntu` | Ubuntu cloud images normally use this user. |
+| OpenStack auth URL | `https://keystone.openstack.mustelinet.com` | Use with application credentials for Terraform and API automation. |
 | Tenant floating IP range | `10.50.0.0/24` | Used by mustelinet routing; not a direct public internet IP range. |
 
 <Callout title="🧭 DNS IDs and SSH names are different" type="info">
   Generated DNS names use VM and project IDs. SSH uses the VM username plus VM and project names in the route template.
 </Callout>
+
+## Default VM usernames
+
+| Image family | Console or SSH username |
+| --- | --- |
+| Ubuntu images | `ubuntu` |
+| Debian images | `debian` |
+| Fedora Cloud | `fedora` |
+| AlmaLinux | `almalinux` |
+| Rocky Linux | `rocky` |
+| Alpine | `alpine` |
+| Fedora CoreOS | `core` |
+
+For console access, prefer normal server or cloud images.
 
 ## Where to find values in Skyline
 
@@ -64,7 +79,7 @@ clouds:
   mustelinet:
     auth_type: v3applicationcredential
     auth:
-      auth_url: https://keystone.mustelinet.com
+      auth_url: https://keystone.openstack.mustelinet.com
       application_credential_id: <application-credential-id>
       application_credential_secret: <application-credential-secret>
     interface: public

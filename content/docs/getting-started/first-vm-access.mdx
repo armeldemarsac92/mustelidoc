@@ -1,21 +1,26 @@
 ---
 title: "First VM 3: expose and connect"
-description: Associate a floating IP, find the generated DNS name, allow SSH, and connect through mustelinet SSH.
+description: Expose a VM for generated DNS, public apps, or Pomerium-backed mustelinet SSH.
 ---
 
 import { Globe2, Route, ShieldCheck, Terminal } from 'lucide-react';
 
-To access the VM from outside the project network, associate a tenant floating IP and use the generated mustelinet route. Tenant SSH goes through mustelinet SSH. Do not SSH directly to the `10.50.0.0/24` floating IP address from the public internet.
+This page is only needed when the VM must be reachable from outside Skyline, such as through generated DNS names, public apps, or Pomerium-backed mustelinet SSH. If you chose Login Type `Password` and only need Skyline console access, you can use the VM without associating a floating IP.
+
+To access the VM from outside the project network, associate a tenant floating IP and use the generated mustelinet route. Tenant SSH goes through Pomerium-backed mustelinet SSH. Do not SSH directly to the `10.50.0.0/24` floating IP address from the public internet.
 
 <Callout title="🚪 Use the mustelinet SSH route, not the floating IP" type="warn">
   The tenant floating IP is part of mustelinet routing. Use the generated route and `ssh.mustelinet.com` instead of trying to SSH directly to the floating IP.
+</Callout>
+
+<Callout title="🖥️ Console-only VMs can skip this" type="info">
+  Skyline console login uses the VM password set at creation time and does not need a floating IP, generated DNS name, or inbound SSH security group rule.
 </Callout>
 
 For mustelinet SSH to route to the VM:
 
 - The VM must have an associated floating IP.
 - The VM security group must allow inbound TCP port `22` from `0.0.0.0/0`.
-- The VM must trust the platform SSH User CA.
 - Your user must be allowed by the project access policy.
 
 <Cards>

@@ -9,7 +9,7 @@ Security groups are project firewall rules applied to instance ports. They contr
 
 DNS names and public edge proxying do not bypass security group rules. If your VM blocks a port, the generated DNS name and edge route cannot make the application reachable.
 
-For standard mustelinet public access paths, do not try to restrict the security group source to the end user's public IP. Incoming HTTP/HTTPS and mustelinet SSH traffic is relayed by the mustelinet proxy or edge, so the VM sees the proxy as the source, not the original user IP.
+For standard mustelinet public access paths, do not try to restrict the security group source to the end user's public IP. Incoming HTTP/HTTPS and Pomerium-backed mustelinet SSH traffic is relayed by the mustelinet proxy or edge, so the VM sees the proxy as the source, not the original user IP.
 
 <Callout title="🛡️ Use narrow ports with the edge source model" type="warn">
   For standard mustelinet SSH and public HTTP/HTTPS paths, use source `0.0.0.0/0` with only the exact ports your workload needs.
@@ -47,13 +47,12 @@ Only open the ports your workload needs. The `0.0.0.0/0` source is required for 
 
 ## Allow SSH
 
-For tenant SSH, use mustelinet SSH through the mustelinet public edge. The VM still needs an inbound security group rule allowing TCP port `22` from `0.0.0.0/0`.
+For tenant SSH, use Pomerium-backed mustelinet SSH through the mustelinet public edge. The VM still needs an inbound security group rule allowing TCP port `22` from `0.0.0.0/0`.
 
 SSH access also depends on:
 
 - The VM having a floating IP.
 - The VM image supporting SSH.
-- The VM trusting the platform SSH User CA.
 - Your GitHub-registered user having the right project group permission.
 
 ## Allow HTTP and HTTPS
