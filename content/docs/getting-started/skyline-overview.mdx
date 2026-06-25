@@ -34,7 +34,7 @@ Use the project selector when:
 
 ## Read the current scope
 
-Skyline pages usually show the current project context near the top navigation or in the project selector. Treat that scope as part of every action you take. An SSH keypair, security group, network, volume, floating IP, application credential, or Magnum cluster created in one project is not automatically available in another project.
+Skyline pages usually show the current project context near the top navigation or in the project selector. Treat that scope as part of every action you take. An SSH keypair, security group, network, volume, floating IP, application credential, or managed Kubernetes cluster created in one project is not automatically available in another project.
 
 ## Check quota and usage
 
@@ -47,7 +47,7 @@ Common quota limits include:
 - Volumes and volume capacity.
 - Floating IPs.
 - Networks, routers, ports, and security groups.
-- Magnum clusters and worker nodes, when enabled.
+- Managed Kubernetes clusters and worker nodes, when enabled.
 
 If a create action fails even though the form looks valid, check quota before retrying with a smaller flavor, fewer nodes, or fewer floating IPs.
 
@@ -82,8 +82,8 @@ Skyline organizes resources by service area. Names may vary slightly by version,
 | Routers | Network, Routers |
 | Floating IPs | Network, Floating IPs |
 | Volumes and snapshots | Volume or Storage |
-| Kubernetes clusters | Kubernetes, Container Infra, or Magnum |
-| Cluster templates | Kubernetes, Container Infra, or Magnum templates |
+| Kubernetes clusters | Containers, Clusters |
+| Cluster templates | Containers, Cluster Templates |
 | Application credentials | User menu, User Center, Application Credentials |
 | DNS zones and records | DNS or Designate, when exposed to your role |
 

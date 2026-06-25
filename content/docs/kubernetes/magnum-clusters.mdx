@@ -1,14 +1,14 @@
 ---
-title: Kubernetes clusters with Magnum
-description: Create and inspect tenant Kubernetes clusters with OpenStack Magnum.
+title: Managed Kubernetes clusters
+description: Create and size tenant Kubernetes clusters from Skyline.
 ---
 
 import { Clock, CloudCog, FileWarning, Network } from 'lucide-react';
 
-Magnum provides tenant Kubernetes clusters from OpenStack. Use Skyline to inspect clusters and templates. Use Terraform when cluster creation should be repeatable.
+Use managed Kubernetes when you need a tenant cluster created from the platform template. Use Skyline for one-off clusters and inspection. Use Terraform when cluster creation should be repeatable.
 
 <Callout title="🧭 Plan before creating clusters" type="info">
-  Magnum requests consume quota across compute, networking, and storage. Decide the template, node count, flavor, network, and kubeconfig handling before submitting the request.
+  Kubernetes clusters consume quota across compute, networking, and storage. Decide the template, master count, master flavor, worker sizing, network, and kubeconfig handling before submitting the request.
 </Callout>
 
 ## Current tenant template
@@ -21,11 +21,11 @@ The current tenant-facing Kubernetes template is:
 | Node image | `ubuntu-jammy-kube-v1.34.7` |
 | Kubernetes version | `v1.34.7` |
 
-Use the template name shown in Skyline or Terraform. If the visible template list differs, use the template documented by your project onboarding before creating the cluster.
+Use this template when creating the cluster from Skyline or Terraform. If the visible template list differs, use the template documented by your project onboarding before creating the cluster.
 
 <Cards>
   <Card icon={<CloudCog />} title="Template">
-    Use the tenant-facing CAPI Helm template shown in Skyline or onboarding.
+    Select `k8s-capi-helm-ubuntu-v1.34.7`.
   </Card>
   <Card icon={<Network />} title="Network and access">
     Confirm network, floating IP, security group, and app exposure requirements.
@@ -40,27 +40,69 @@ Use the template name shown in Skyline or Terraform. If the visible template lis
 
 ## Find cluster templates
 
-Depending on Skyline navigation, look under Kubernetes, Container Infra, or Magnum. Open Cluster Templates to confirm:
+In Skyline, open Containers, then Cluster Templates to confirm:
 
 - Template name.
 - Kubernetes version.
 - Node image.
 - Allowed networking and flavor options.
 
-Templates define what tenants can request. They do not expose the platform's internal Magnum implementation.
+Templates define what tenants can request.
 
 ## Plan a cluster
 
 Before creating a cluster, decide:
 
 - Project and quota.
-- Cluster template.
+- Cluster template: `k8s-capi-helm-ubuntu-v1.34.7`.
+- Number of Master Nodes.
+- Master flavor.
 - Worker node count.
-- Node flavor.
+- Worker flavor.
 - Keypair, if requested by the form.
 - Network and floating IP requirements.
 - Security groups and app exposure model.
 - Where the kubeconfig will be stored.
+
+## Master nodes
+
+Use an odd number of master nodes. Recommended values are `1`, `3`, or `5`.
+
+For a stable default cluster, use `3` master nodes with the `m1.medium` flavor or larger. The master count should be odd because the Kubernetes control plane and `etcd` rely on quorum. Avoid `2` master nodes: an even control-plane count does not improve quorum behavior the way users usually expect.
+
+Use at least `m1.medium` for master nodes. In this cloud, `m1.medium` provides:
+
+| Resource | Minimum recommended value |
+| --- | --- |
+| vCPU | `2` |
+| RAM | `4 GiB` |
+
+Smaller master flavors are likely to be unstable or slow for the Kubernetes API server, scheduler, controller manager, `etcd`, cluster startup, and addons.
+
+## Worker nodes
+
+Size worker nodes separately from the control plane. `m1.medium` is a safe default, but smaller worker flavors can be acceptable for light test workloads when the pods fit.
+
+With autoscaling enabled:
+
+| Field | Meaning |
+| --- | --- |
+| Number of Master Nodes | Exact control-plane count. |
+| Number of Nodes | Maximum worker count. |
+| `min_node_count` | Initial and minimum worker count. |
+
+Without autoscaling, treat Number of Nodes as the requested worker count.
+
+## Cluster storage
+
+Storage for the current template is controlled by template labels, not by the flavor disk size.
+
+Current baseline:
+
+| Node type | Storage |
+| --- | --- |
+| Master | `20 GiB` root disk plus `5 GiB` `etcd` disk |
+| Worker | `20 GiB` root disk |
 
 Generated kubeconfigs are sensitive. Do not commit or share them.
 
@@ -71,16 +113,16 @@ Generated kubeconfigs are sensitive. Do not commit or share them.
 ## Create from Skyline
 
 1. Switch to the correct project.
-2. Open Kubernetes, Container Infra, or Magnum.
-3. Choose Create Cluster.
-4. Select `k8s-capi-helm-ubuntu-v1.34.7` when available.
-5. Enter the cluster name, node count, flavor, and required network details.
+2. Open Containers, then Clusters.
+3. Click Create Cluster.
+4. Select the cluster template `k8s-capi-helm-ubuntu-v1.34.7`.
+5. Enter the cluster name, master count, master flavor, worker count, worker flavor, and required network details.
 6. Submit the request and monitor cluster status.
 
 Cluster creation can take time. Backend polling errors or temporary status messages do not always mean final failure. Avoid deleting and recreating repeatedly unless the cluster reaches a clear failed state.
 
 ## Use Terraform for repeatable clusters
 
-Terraform is often better for Magnum because it keeps cluster size, template choice, generated files, and related network resources together. The mustelinet tenant workflow should use the public CAPI Helm template values exposed to tenants, not internal driver details.
+Terraform is often better for managed Kubernetes because it keeps cluster size, template choice, generated files, and related network resources together. The mustelinet tenant workflow should use the public template values exposed to tenants.
 
 Keep generated cluster files under a local `generated/` directory when applicable, and exclude kubeconfigs and private keys from version control.

@@ -1,6 +1,6 @@
 ---
 title: Common tenant issues
-description: Tenant-focused checks for Skyline, console login, DNS, app access, SSH, floating IPs, and Magnum.
+description: Tenant-focused checks for Skyline, console login, DNS, app access, SSH, floating IPs, and managed Kubernetes.
 ---
 
 import { Activity, Clock, FileText, Globe2, Monitor, Search, ShieldCheck, Terminal } from 'lucide-react';
@@ -145,12 +145,14 @@ Check:
 
 Generated records are created automatically from OpenStack inventory, usually within 15 seconds after floating IP association.
 
-## Magnum cluster creation appears stuck
+## Managed Kubernetes cluster creation appears stuck
 
 Check:
 
 - The selected template is `k8s-capi-helm-ubuntu-v1.34.7` when that is the expected tenant template.
-- Project quota allows the requested node count and flavor.
+- Project quota allows the requested master count, worker count, and flavors.
+- Master count is odd, such as `1`, `3`, or `5`.
+- Master flavor is `m1.medium` or larger.
 - Required networks, SSH keypairs, and security groups exist.
 - The cluster has not reached a final failed state.
 

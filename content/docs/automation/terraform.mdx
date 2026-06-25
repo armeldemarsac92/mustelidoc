@@ -25,7 +25,7 @@ Use Terraform for:
 
 - Repeatable environments.
 - Team-shared infrastructure.
-- Kubernetes or Magnum clusters.
+- Managed Kubernetes clusters.
 - Rebuilding test stacks.
 - Managing many related resources consistently.
 
@@ -55,7 +55,7 @@ Terraform resources should follow the same tenant model:
 - Floating IP allocation and association.
 - Generated app DNS names from floating IP ownership.
 - Volumes and volume attachments.
-- Magnum cluster creation from the public CAPI Helm template.
+- Managed Kubernetes cluster creation from the public tenant template.
 
 ## Endpoint
 
@@ -155,13 +155,15 @@ If the credential is lost, create a new one. If it is exposed, delete it and rot
 
 Some Terraform examples write local files such as SSH private keys, kubeconfigs, or helper inventories under `generated/`. Treat that directory as local output. Do not upload it to Git or attach it to shared notes.
 
-## Magnum with Terraform
+## Managed Kubernetes with Terraform
 
 For tenant Kubernetes clusters, Terraform should use the public template exposed to tenants:
 
 - Cluster template: `k8s-capi-helm-ubuntu-v1.34.7`.
 - Node image: `ubuntu-jammy-kube-v1.34.7`.
 - Kubernetes version: `v1.34.7`.
+
+Use the same sizing rules as Skyline-created clusters: an odd master count, `3` masters for HA, `m1.medium` or larger for masters, and worker flavor/count values sized for the workload. With autoscaling enabled, keep in mind that the master count is exact while the worker node count may represent the maximum worker count.
 
 Keep cluster size, flavor, network choices, and generated kubeconfig handling in code so a team can review the full cluster request before applying it.
 
